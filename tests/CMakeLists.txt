@@ -3,6 +3,7 @@ set(TEST_PRODUCT_NAME sweetshot_tests)
 add_executable(${TEST_PRODUCT_NAME}
         tests_main.cpp
         smoke_test.cpp
+        visual_regression_test.cpp
 )
 
 target_compile_features(${TEST_PRODUCT_NAME} PRIVATE cxx_std_17)
