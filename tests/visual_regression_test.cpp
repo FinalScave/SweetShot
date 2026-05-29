@@ -124,6 +124,7 @@ TEST_CASE("Visual fixture keeps scoped code layout stable") {
   input.source_text = "func Example() {\n    if (ready) {\n        return \"ok\";\n    }\n}";
   input.file_name = "example.visual";
   input.syntax_directory = syntax_directory.path.string();
+  input.options.padding_y = 20.0;
   input.options.focus_lines = {2};
   input.options.mark_lines = {1};
 
@@ -141,15 +142,21 @@ line 4 source=4 y=108 line_number=yes focus=no mark=no text="}" guides=none
 
   const std::string svg = renderer.renderToSvg(input);
   REQUIRE(countOccurrences(svg, "class=\"sweetshot-indent-guide\"") == 4);
+  requireContains(svg, "<rect x=\"0\" y=\"0\" width=\"72\" height=\"150\"");
+  requireContains(svg, "<line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"150\"");
+  requireContains(svg, "<text x=\"48\" y=\"34\" text-anchor=\"end\"");
   requireContains(svg, "<rect x=\"0\" y=\"42\" width=\"269.6\" height=\"22\" fill=");
   requireContains(svg, "<rect x=\"0\" y=\"64\" width=\"269.6\" height=\"22\" fill=");
+  requireContains(svg, "<line class=\"sweetshot-indent-guide\" x1=\"72\" y1=\"42\" x2=\"72\" y2=\"64\"");
   requireContains(svg, "<line class=\"sweetshot-indent-guide\" x1=\"106.72\" y1=\"64\" x2=\"106.72\" y2=\"86\"");
   requireNotContains(svg, "<tspan x=");
 
   const std::string html = renderer.renderToHtml(input);
   REQUIRE(countOccurrences(html, "class=\"sweetshot-indent-guide\"") == 4);
+  requireContains(html, ".sweetshot-gutter{box-sizing:border-box;width:72px;padding:0 24px 0 0;");
   requireContains(html, "sweetshot-line mark");
   requireContains(html, "sweetshot-line focus");
+  requireContains(html, "left:24px");
   requireContains(html, "left:58.72px");
 }
 
@@ -158,6 +165,7 @@ TEST_CASE("Visual fixture keeps wrapped code layout stable") {
   input.source_text = "0123456789abcdef";
   input.syntax_directory = "missing-syntax-dir";
   input.options.show_line_numbers = false;
+  input.options.padding_y = 20.0;
   input.options.max_columns = 4;
   input.options.long_line_mode = sweetshot::LongLineMode::Wrap;
 
@@ -176,5 +184,12 @@ line 3 source=0 y=86 line_number=no focus=no mark=no text="cdef" guides=none
   REQUIRE(countOccurrences(svg, "<text ") == 4);
   requireContains(svg, "width=\"82.72\"");
   requireContains(svg, "height=\"128\"");
+  requireContains(svg, "<text x=\"24\" y=\"34\" xml:space=\"preserve\">");
   requireNotContains(svg, "456789");
+  requireNotContains(svg, "text-anchor=\"end\"");
+
+  const std::string html = renderer.renderToHtml(input);
+  requireContains(html, ".sweetshot{box-sizing:border-box;width:82.72px;");
+  requireContains(html, ".sweetshot-code{padding-left:24px;");
+  requireNotContains(html, "class=\"sweetshot-gutter\"");
 }

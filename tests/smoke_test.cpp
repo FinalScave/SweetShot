@@ -169,6 +169,7 @@ TEST_CASE("Renderer keeps scoped indent guides inside scope markers") {
   input.source_text = "{\n    child\n}";
   input.file_name = "sample.brace";
   input.syntax_directory = syntax_directory.string();
+  input.options.padding_y = 20.0;
 
   sweetshot::Renderer renderer;
   const sweetshot::RenderScene scene = renderer.renderScene(input);
