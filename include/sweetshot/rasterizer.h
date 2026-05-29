@@ -2,6 +2,7 @@
 #define SWEETSHOT_RASTERIZER_H
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -25,10 +26,21 @@ namespace sweetshot {
     virtual PngResult Rasterize(std::string_view svg, const PngOptions& options) = 0;
   };
 
+#if defined(SWEETSHOT_PNG_BACKEND_RESVG)
   class ResvgRasterizer final : public SvgRasterizer {
   public:
     PngResult Rasterize(std::string_view svg, const PngOptions& options) override;
   };
+#endif
+
+#if defined(SWEETSHOT_PNG_BACKEND_LUNASVG)
+  class LunaSvgRasterizer final : public SvgRasterizer {
+  public:
+    PngResult Rasterize(std::string_view svg, const PngOptions& options) override;
+  };
+#endif
+
+  std::shared_ptr<SvgRasterizer> CreateDefaultSvgRasterizer();
 }
 
 #endif

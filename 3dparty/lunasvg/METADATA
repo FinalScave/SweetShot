@@ -1,0 +1,5 @@
+Name: LunaSVG
+Version: 2872affa1027cad92a05408a7e6f2547efa7f364
+Source: https://github.com/sammycage/lunasvg.git
+License: MIT
+Retrieved-Files: CMake FetchContent builds LunaSVG with bundled PlutoVG

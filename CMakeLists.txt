@@ -19,6 +19,20 @@ endif ()
 
 option(SWEETSHOT_BUILD_CLI "Build SweetShot command line tool" ${SWEETSHOT_DEFAULT_BUILD_CLI})
 option(SWEETSHOT_BUILD_TESTS "Build SweetShot tests" ${SWEETSHOT_DEFAULT_BUILD_TESTS})
+set(SWEETSHOT_PNG_BACKEND "resvg" CACHE STRING "PNG backend: resvg or lunasvg")
+set_property(CACHE SWEETSHOT_PNG_BACKEND PROPERTY STRINGS resvg lunasvg)
+
+if (SWEETSHOT_PNG_BACKEND STREQUAL "resvg")
+    set(SWEETSHOT_PNG_BACKEND_SOURCE ${PROJECT_SOURCE_DIR}/src/resvg_rasterizer.cpp)
+    set(SWEETSHOT_PNG_BACKEND_TARGET SweetShot3p::resvg)
+    set(SWEETSHOT_PNG_BACKEND_DEFINITION SWEETSHOT_PNG_BACKEND_RESVG=1)
+elseif (SWEETSHOT_PNG_BACKEND STREQUAL "lunasvg")
+    set(SWEETSHOT_PNG_BACKEND_SOURCE ${PROJECT_SOURCE_DIR}/src/lunasvg_rasterizer.cpp)
+    set(SWEETSHOT_PNG_BACKEND_TARGET SweetShot3p::lunasvg)
+    set(SWEETSHOT_PNG_BACKEND_DEFINITION SWEETSHOT_PNG_BACKEND_LUNASVG=1)
+else ()
+    message(FATAL_ERROR "SWEETSHOT_PNG_BACKEND must be 'resvg' or 'lunasvg'")
+endif ()
 
 include(cmake/SweetShotThirdParty.cmake)
 
@@ -27,7 +41,7 @@ set(SWEETSHOT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
 add_library(sweetshot_core STATIC
         ${SWEETSHOT_SRC_DIR}/renderer.cpp
-        ${SWEETSHOT_SRC_DIR}/resvg_rasterizer.cpp
+        ${SWEETSHOT_PNG_BACKEND_SOURCE}
         ${SWEETSHOT_SRC_DIR}/theme.cpp
 )
 add_library(SweetShot::core ALIAS sweetshot_core)
@@ -41,11 +55,16 @@ target_include_directories(sweetshot_core
 target_compile_definitions(sweetshot_core PRIVATE
         SWEETSHOT_DEFAULT_SYNTAX_DIR="${SWEETSHOT_3P_SWEETLINE_SOURCE_DIR}/syntaxes"
 )
+target_compile_definitions(sweetshot_core PUBLIC
+        ${SWEETSHOT_PNG_BACKEND_DEFINITION}
+)
 target_link_libraries(sweetshot_core PUBLIC
         SweetLine::sweetline_static
-        SweetShot3p::resvg
 )
-target_link_libraries(sweetshot_core PRIVATE SweetShot3p::lodepng)
+target_link_libraries(sweetshot_core PRIVATE
+        SweetShot3p::lodepng
+        ${SWEETSHOT_PNG_BACKEND_TARGET}
+)
 
 if (MSVC)
     target_compile_options(sweetshot_core PRIVATE /Zc:__cplusplus /utf-8)
@@ -55,7 +74,7 @@ endif ()
 if (SWEETSHOT_BUILD_CLI)
     add_executable(sweetshot cli/main.cpp)
     target_link_libraries(sweetshot PRIVATE SweetShot::core)
-    if (WIN32)
+    if (WIN32 AND SWEETSHOT_PNG_BACKEND STREQUAL "resvg")
         add_custom_command(TARGET sweetshot POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:SweetShot3p::resvg>

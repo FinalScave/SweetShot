@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -222,5 +223,9 @@ namespace sweetshot {
     UnpremultiplyPixmap(pixmap);
 
     return {EncodePng(pixmap, width, height), width, height};
+  }
+
+  std::shared_ptr<SvgRasterizer> CreateDefaultSvgRasterizer() {
+    return std::make_shared<ResvgRasterizer>();
   }
 }

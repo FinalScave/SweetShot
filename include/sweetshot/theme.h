@@ -50,6 +50,7 @@ namespace sweetshot {
   };
 
   Theme DefaultTheme();
+  Theme VscodeDarkTheme();
   Theme MonokaiTheme();
   Theme DraculaTheme();
   Theme GithubLightTheme();

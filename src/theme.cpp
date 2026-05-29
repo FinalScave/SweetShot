@@ -144,7 +144,24 @@ namespace sweetshot {
   }
 
   Theme DefaultTheme() {
-    return MakeTheme("default", "#1e1e1e", "#d4d4d4", {
+    Theme theme = MakeTheme("default", "#1b1e24", "#d7dee9", {
+      "#7aa2f7", "#9ece6a", "#ff9e64", "#7a8294", "#e0af68", "#73daca", "#d7dee9", "#b0bed3",
+      "#2ac3de", "#f7768e", "#f7768e", "#bb9af7", "#73daca", "#7dcfff", "#4c9dff", "#d7dee9"
+    });
+    theme.line_number_foreground = "#5e6778";
+    theme.line_number_background = "#1b1e24";
+    theme.gutter_border = "#272b35";
+    theme.indent_guide_foreground = "#262a34";
+    theme.focus_background = "#1e222a";
+    theme.mark_background = "#262e3e";
+    theme.token_styles[token_style_id::kKeyword].bold = true;
+    theme.token_styles[token_style_id::kClass].bold = true;
+    theme.token_styles[token_style_id::kComment].italic = true;
+    return theme;
+  }
+
+  Theme VscodeDarkTheme() {
+    return MakeTheme("vscode-dark", "#1e1e1e", "#d4d4d4", {
       "#569cd6", "#bd63c5", "#e4fad5", "#60ae6f", "#4ec9b0", "#9cdcfe", "#9b9bc8", "#d69d85",
       "#fffd9b", "#569cd6", "#9b9bc8", "#4ec9b0", "#4ec9b0", "#569cd6", "#4fc1ff", "#9cdcfe"
     });
@@ -201,8 +218,11 @@ namespace sweetshot {
 
   Theme BuiltinTheme(const std::string& name) {
     const std::string normalized = NormalizeThemeName(name);
-    if (normalized.empty() || normalized == "sweetlinedark" || normalized == "default" || normalized == "dark") {
+    if (normalized.empty() || normalized == "default" || normalized == "dark") {
       return DefaultTheme();
+    }
+    if (normalized == "vscode" || normalized == "vscodedark") {
+      return VscodeDarkTheme();
     }
     if (normalized == "monokai") {
       return MonokaiTheme();

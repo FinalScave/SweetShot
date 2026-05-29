@@ -18,6 +18,7 @@ Current dependencies:
 
 - `catch2` provides `SweetShot3p::Catch2`.
 - `lodepng` fetches LodePNG and provides `SweetShot3p::lodepng`.
+- `lunasvg` fetches LunaSVG and provides `SweetShot3p::lunasvg`.
 - `resvg` fetches resvg and provides `SweetShot3p::resvg`.
 - `sweetline` fetches SweetLine and provides `SweetLine::sweetline_static`.
 

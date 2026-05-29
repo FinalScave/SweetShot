@@ -64,8 +64,8 @@ TEST_CASE("Renderer produces highlighted scenes and outputs") {
   });
   REQUIRE(return_run != scene.lines[1].runs.end());
   REQUIRE(return_run->style_id == sweetshot::token_style_id::kKeyword);
-  REQUIRE(return_run->style.foreground == "#569cd6");
-  REQUIRE_FALSE(return_run->style.bold);
+  REQUIRE(return_run->style.foreground == "#7aa2f7");
+  REQUIRE(return_run->style.bold);
 
   const sweetshot::RenderScene cached_scene = renderer.RenderToScene(input);
   REQUIRE(cached_scene.language == scene.language);
@@ -131,9 +131,10 @@ TEST_CASE("Renderer reports missing PNG rasterizer") {
   REQUIRE_THROWS_WITH(renderer.RenderToPng(input), "PNG rasterizer is not configured");
 }
 
-TEST_CASE("Resvg rasterizer renders PNG bytes") {
-  sweetshot::ResvgRasterizer rasterizer;
-  const sweetshot::PngResult png = rasterizer.Rasterize(
+TEST_CASE("Default PNG rasterizer renders PNG bytes") {
+  const std::shared_ptr<sweetshot::SvgRasterizer> rasterizer = sweetshot::CreateDefaultSvgRasterizer();
+  REQUIRE(rasterizer);
+  const sweetshot::PngResult png = rasterizer->Rasterize(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"3\" height=\"2\">"
     "<rect width=\"3\" height=\"2\" fill=\"#ff0000\"/></svg>",
     {});
@@ -147,12 +148,13 @@ TEST_CASE("Resvg rasterizer renders PNG bytes") {
   REQUIRE(png.bytes[3] == 71);
 }
 
-TEST_CASE("Resvg rasterizer applies PNG scale") {
-  sweetshot::ResvgRasterizer rasterizer;
+TEST_CASE("Default PNG rasterizer applies PNG scale") {
+  const std::shared_ptr<sweetshot::SvgRasterizer> rasterizer = sweetshot::CreateDefaultSvgRasterizer();
+  REQUIRE(rasterizer);
   sweetshot::PngOptions options;
   options.scale = 2.0;
 
-  const sweetshot::PngResult png = rasterizer.Rasterize(
+  const sweetshot::PngResult png = rasterizer->Rasterize(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"3\" height=\"2\">"
     "<rect width=\"3\" height=\"2\" fill=\"#ff0000\"/></svg>",
     options);
@@ -161,9 +163,10 @@ TEST_CASE("Resvg rasterizer applies PNG scale") {
   REQUIRE(png.height == 4);
 }
 
-TEST_CASE("Resvg rasterizer writes compressed PNG bytes") {
-  sweetshot::ResvgRasterizer rasterizer;
-  const sweetshot::PngResult png = rasterizer.Rasterize(
+TEST_CASE("Default PNG rasterizer writes compressed PNG bytes") {
+  const std::shared_ptr<sweetshot::SvgRasterizer> rasterizer = sweetshot::CreateDefaultSvgRasterizer();
+  REQUIRE(rasterizer);
+  const sweetshot::PngResult png = rasterizer->Rasterize(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"128\" height=\"128\">"
     "<rect width=\"128\" height=\"128\" fill=\"#ff0000\"/></svg>",
     {});
@@ -282,19 +285,29 @@ TEST_CASE("Renderer keeps scoped indent guides inside scope markers") {
   std::filesystem::remove_all(syntax_directory);
 }
 
-TEST_CASE("Builtin themes follow SweetLine defaults") {
+TEST_CASE("Builtin themes include editor default and VS Code dark") {
   const sweetshot::Theme default_theme = sweetshot::BuiltinTheme("");
   REQUIRE(default_theme.name == "default");
-  REQUIRE(default_theme.background == "#1e1e1e");
-  REQUIRE(default_theme.foreground == "#d4d4d4");
-  REQUIRE(default_theme.indent_guide_foreground == "#5e5e5e");
-  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kKeyword).foreground == "#569cd6");
-  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kBuiltin).foreground == "#569cd6");
-  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kProperty).foreground == "#9cdcfe");
+  REQUIRE(default_theme.background == "#1b1e24");
+  REQUIRE(default_theme.foreground == "#d7dee9");
+  REQUIRE(default_theme.line_number_foreground == "#5e6778");
+  REQUIRE(default_theme.indent_guide_foreground == "#262a34");
+  REQUIRE(default_theme.focus_background == "#1e222a");
+  REQUIRE(default_theme.mark_background == "#262e3e");
+  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kKeyword).foreground == "#7aa2f7");
+  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kKeyword).bold);
+  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kComment).foreground == "#7a8294");
+  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kComment).italic);
+  REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kBuiltin).foreground == "#7dcfff");
+
+  const sweetshot::Theme vscode_dark_theme = sweetshot::BuiltinTheme("vscode-dark");
+  REQUIRE(vscode_dark_theme.name == "vscode-dark");
+  REQUIRE(vscode_dark_theme.background == "#1e1e1e");
+  REQUIRE(vscode_dark_theme.foreground == "#d4d4d4");
+  REQUIRE(vscode_dark_theme.StyleForToken(sweetshot::token_style_id::kKeyword).foreground == "#569cd6");
 
   REQUIRE(sweetshot::BuiltinTheme("default").name == "default");
-  REQUIRE(sweetshot::BuiltinTheme("SweetLine Dark").name == "default");
-  REQUIRE(sweetshot::BuiltinTheme("sweetline-dark").name == "default");
+  REQUIRE(sweetshot::BuiltinTheme("vscode").name == "vscode-dark");
   REQUIRE(sweetshot::BuiltinTheme("solarized dark").name == "solarized-dark");
   REQUIRE(sweetshot::BuiltinTheme("unknown").name == "default");
   REQUIRE(sweetshot::BuiltinTheme("nord").StyleForToken(sweetshot::token_style_id::kBuiltin).foreground == "#5e81ac");

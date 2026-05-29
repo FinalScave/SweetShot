@@ -5,7 +5,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -31,7 +30,7 @@ namespace {
            << "Options:\n"
            << "  -o, --output <path>       Write SVG, PNG, or HTML output\n"
            << "  --lang <name>            Override language detection\n"
-           << "  --theme <name>           default, monokai, dracula, one-dark, solarized-dark, nord, github-dark, or github-light\n"
+           << "  --theme <name>           default, vscode-dark, monokai, dracula, one-dark, solarized-dark, nord, github-dark, or github-light\n"
            << "  --scale <factor>         PNG output scale factor, defaults to 2\n"
            << "  --syntax-dir <path>      Override SweetLine syntax directory\n"
            << "  --lines <start:end>      Render a one-based inclusive line range\n"
@@ -217,7 +216,7 @@ int main(int argc, char* argv[]) {
     input.source_text = cli.input_path.empty() || cli.input_path == "-" ? ReadStdin() : ReadFile(cli.input_path);
 
     sweetshot::RendererConfig config;
-    config.png_rasterizer = std::make_shared<sweetshot::ResvgRasterizer>();
+    config.png_rasterizer = sweetshot::CreateDefaultSvgRasterizer();
     sweetshot::Renderer renderer(config);
     std::string output;
     if (HasExtension(cli.output_path, ".html")) {

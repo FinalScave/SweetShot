@@ -19,7 +19,7 @@ if (MSVC)
     target_compile_definitions(${TEST_PRODUCT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX=1)
 endif ()
 
-if (WIN32)
+if (WIN32 AND SWEETSHOT_PNG_BACKEND STREQUAL "resvg")
     add_custom_command(TARGET ${TEST_PRODUCT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SweetShot3p::resvg>
