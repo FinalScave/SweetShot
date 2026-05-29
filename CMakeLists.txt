@@ -1,0 +1,88 @@
+cmake_minimum_required(VERSION 3.16)
+project(sweetshot VERSION 0.1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+if (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(SWEETSHOT_DEFAULT_BUILD_CLI ON)
+    set(SWEETSHOT_DEFAULT_BUILD_TESTS ON)
+else ()
+    set(SWEETSHOT_DEFAULT_BUILD_CLI OFF)
+    set(SWEETSHOT_DEFAULT_BUILD_TESTS OFF)
+endif ()
+
+option(SWEETSHOT_BUILD_CLI "Build SweetShot command line tool" ${SWEETSHOT_DEFAULT_BUILD_CLI})
+option(SWEETSHOT_BUILD_TESTS "Build SweetShot tests" ${SWEETSHOT_DEFAULT_BUILD_TESTS})
+
+include(FetchContent)
+
+set(SWEETLINE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(SWEETLINE_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(SWEETLINE_BUILD_STATIC ON CACHE BOOL "" FORCE)
+set(SWEETLINE_BUILD_WASM_EMBIND OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+        sweetline
+        GIT_REPOSITORY https://github.com/FinalScave/SweetLine.git
+        GIT_TAG f8aa883b50f2e748098420917fbef5865b55a861
+        GIT_SUBMODULES ""
+)
+FetchContent_MakeAvailable(sweetline)
+
+set(SWEETSHOT_PUBLIC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(SWEETSHOT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+
+add_library(sweetshot_core STATIC
+        ${SWEETSHOT_SRC_DIR}/renderer.cpp
+        ${SWEETSHOT_SRC_DIR}/theme.cpp
+)
+add_library(SweetShot::core ALIAS sweetshot_core)
+
+target_compile_features(sweetshot_core PUBLIC cxx_std_17)
+target_include_directories(sweetshot_core
+        PUBLIC
+        $<BUILD_INTERFACE:${SWEETSHOT_PUBLIC_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:include>
+)
+target_compile_definitions(sweetshot_core PRIVATE
+        SWEETSHOT_DEFAULT_SYNTAX_DIR="${sweetline_SOURCE_DIR}/syntaxes"
+)
+target_link_libraries(sweetshot_core PUBLIC SweetLine::sweetline_static)
+
+if (MSVC)
+    target_compile_options(sweetshot_core PRIVATE /Zc:__cplusplus /utf-8)
+    target_compile_definitions(sweetshot_core PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX=1)
+endif ()
+
+if (SWEETSHOT_BUILD_CLI)
+    add_executable(sweetshot cli/main.cpp)
+    target_link_libraries(sweetshot PRIVATE SweetShot::core)
+endif ()
+
+if (SWEETSHOT_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif ()
+
+include(GNUInstallDirs)
+install(TARGETS sweetshot_core
+        EXPORT SweetShotTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+if (TARGET sweetshot)
+    install(TARGETS sweetshot RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif ()
+
+install(DIRECTORY ${SWEETSHOT_PUBLIC_INCLUDE_DIR}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h"
+)
