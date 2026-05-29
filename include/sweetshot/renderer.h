@@ -1,12 +1,15 @@
 #ifndef SWEETSHOT_RENDERER_H
 #define SWEETSHOT_RENDERER_H
 
+#include <memory>
 #include <string>
 
 #include "sweetshot/input.h"
 #include "sweetshot/scene.h"
 
 namespace sweetshot {
+  struct RendererState;
+
   struct RendererConfig {
     std::string syntax_directory;
   };
@@ -21,6 +24,7 @@ namespace sweetshot {
 
   private:
     RendererConfig config_;
+    std::shared_ptr<RendererState> state_;
   };
 }
 

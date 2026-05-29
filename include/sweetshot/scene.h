@@ -26,6 +26,7 @@ namespace sweetshot {
     double y {0.0};
     bool focused {false};
     bool marked {false};
+    bool line_number_visible {true};
     std::vector<TextRun> runs;
   };
 
