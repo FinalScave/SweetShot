@@ -331,6 +331,22 @@ namespace sweetshot {
       return std::max(1.0, std::round(options.font_size * 0.62 * 100.0) / 100.0);
     }
 
+    struct VisualRange {
+      std::size_t start_column {0};
+      std::size_t end_column {0};
+      bool line_number_visible {true};
+    };
+
+    struct LayoutMetrics {
+      double char_width {0.0};
+      double text_origin_x {0.0};
+      std::size_t column_limit {0};
+    };
+
+    double textOriginX(const RenderOptions& options) {
+      return options.padding_x + (options.show_line_numbers ? options.gutter_width : 0.0);
+    }
+
     std::size_t maxColumnsForWidth(const RenderOptions& options, double text_origin_x, double char_width) {
       const double available_width = options.max_width - text_origin_x - options.padding_x;
       if (available_width <= 0.0) {
@@ -348,11 +364,23 @@ namespace sweetshot {
       return limit;
     }
 
-    struct VisualRange {
-      std::size_t start_column {0};
-      std::size_t end_column {0};
-      bool line_number_visible {true};
-    };
+    LayoutMetrics makeLayoutMetrics(const RenderOptions& options) {
+      LayoutMetrics metrics;
+      metrics.char_width = estimateCharWidth(options);
+      metrics.text_origin_x = textOriginX(options);
+      metrics.column_limit = constrainedColumnLimit(options, metrics.text_origin_x, metrics.char_width);
+      return metrics;
+    }
+
+    double visualColumnX(const LayoutMetrics& metrics, const VisualRange& range, std::size_t column) {
+      return metrics.text_origin_x + static_cast<double>(column - range.start_column) * metrics.char_width;
+    }
+
+    double renderWidth(const RenderOptions& options, const LayoutMetrics& metrics, std::size_t max_visual_columns) {
+      return std::min(options.max_width,
+                      metrics.text_origin_x + options.padding_x
+                      + static_cast<double>(max_visual_columns) * metrics.char_width);
+    }
 
     std::vector<VisualRange> visualRangesForLine(std::size_t total_columns, const RenderOptions& options,
                                                  std::size_t column_limit) {
@@ -404,9 +432,7 @@ namespace sweetshot {
     std::vector<SceneIndentGuide> indentGuidesForRange(const std::vector<SourceIndentGuide>& guides,
                                                        std::size_t source_line,
                                                        const VisualRange& range,
-                                                       double text_origin_x,
-                                                       double char_width,
-                                                       std::size_t column_limit) {
+                                                       const LayoutMetrics& metrics) {
       std::vector<SceneIndentGuide> result;
       for (const SourceIndentGuide& segment : guides) {
         if (source_line < segment.start_line || source_line > segment.end_line) {
@@ -415,18 +441,22 @@ namespace sweetshot {
         if (!guideLineVisible(segment, source_line)) {
           continue;
         }
-        if (!guideColumnVisible(segment.column, range, column_limit)) {
+        if (!guideColumnVisible(segment.column, range, metrics.column_limit)) {
           continue;
         }
         SceneIndentGuide guide;
         guide.column = segment.column;
-        guide.x = text_origin_x + static_cast<double>(segment.column - range.start_column) * char_width;
+        guide.x = visualColumnX(metrics, range, segment.column);
         guide.nesting_level = segment.nesting_level;
         guide.continues_before = segment.continues_before;
         guide.continues_after = segment.continues_after;
         result.push_back(guide);
       }
       return result;
+    }
+
+    double codeRelativeX(const RenderScene& scene, double absolute_x) {
+      return scene.options.padding_x + absolute_x - scene.text_origin_x;
     }
 
     std::vector<HighlightSegment> sliceSegmentsForRange(const std::string& line,
@@ -554,10 +584,9 @@ namespace sweetshot {
     scene.options = input.options;
     scene.language = analysis.language;
     scene.file_name = input.file_name;
-    scene.char_width = estimateCharWidth(input.options);
-    scene.text_origin_x = input.options.padding_x
-      + (input.options.show_line_numbers ? input.options.gutter_width : 0.0);
-    const std::size_t column_limit = constrainedColumnLimit(input.options, scene.text_origin_x, scene.char_width);
+    const LayoutMetrics metrics = makeLayoutMetrics(input.options);
+    scene.char_width = metrics.char_width;
+    scene.text_origin_x = metrics.text_origin_x;
 
     std::size_t max_visual_columns = 0;
 
@@ -566,7 +595,7 @@ namespace sweetshot {
         line_index < analysis.lines.size() ? analysis.lines[line_index] : std::vector<HighlightSegment> {};
       std::vector<HighlightSegment> segments = buildRunsForLine(source_lines[line_index], highlighted);
       const std::size_t total_columns = charCount(source_lines[line_index]);
-      for (const VisualRange& range : visualRangesForLine(total_columns, input.options, column_limit)) {
+      for (const VisualRange& range : visualRangesForLine(total_columns, input.options, metrics.column_limit)) {
         SceneLine scene_line;
         scene_line.source_line = line_index;
         scene_line.text = utf8Substr(source_lines[line_index], range.start_column,
@@ -578,8 +607,7 @@ namespace sweetshot {
         scene_line.line_number_visible = range.line_number_visible;
         max_visual_columns = std::max(max_visual_columns, charCount(scene_line.text));
         if (input.options.show_indent_guides) {
-          scene_line.indent_guides = indentGuidesForRange(analysis.indent_guides, line_index, range,
-                                                          scene.text_origin_x, scene.char_width, column_limit);
+          scene_line.indent_guides = indentGuidesForRange(analysis.indent_guides, line_index, range, metrics);
           for (const SceneIndentGuide& guide : scene_line.indent_guides) {
             max_visual_columns = std::max(max_visual_columns, guide.column - range.start_column + 1);
           }
@@ -589,8 +617,7 @@ namespace sweetshot {
              sliceSegmentsForRange(source_lines[line_index], segments, range.start_column, range.end_column)) {
           TextRun run;
           run.column = segment.start_column;
-          run.x = scene.text_origin_x
-            + static_cast<double>(segment.start_column - range.start_column) * scene.char_width;
+          run.x = visualColumnX(metrics, range, segment.start_column);
           run.y = scene_line.y + input.options.font_size;
           run.text = segment.text;
           run.style_id = segment.style_id;
@@ -601,9 +628,7 @@ namespace sweetshot {
       }
     }
 
-    scene.width = std::min(input.options.max_width,
-                           scene.text_origin_x + input.options.padding_x
-                           + static_cast<double>(max_visual_columns) * scene.char_width);
+    scene.width = renderWidth(input.options, metrics, max_visual_columns);
     scene.height = input.options.padding_y * 2.0
       + static_cast<double>(scene.lines.size()) * input.options.line_height;
 
@@ -716,7 +741,7 @@ namespace sweetshot {
       html << "<span class=\"sweetshot-code\">";
       if (scene.options.show_indent_guides) {
         for (const SceneIndentGuide& guide : line.indent_guides) {
-          const double left = scene.options.padding_x + guide.x - scene.text_origin_x;
+          const double left = codeRelativeX(scene, guide.x);
           html << "<span class=\"sweetshot-indent-guide\" style=\"left:"
                << left << "px\"></span>";
         }
