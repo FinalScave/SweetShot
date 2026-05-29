@@ -18,7 +18,7 @@ SweetLine is fetched with CMake FetchContent from `https://github.com/FinalScave
 
 ```bash
 build/bin/sweetshot main.cpp -o main.svg
-build/bin/sweetshot main.cpp --theme sweetline-dark --lines 20:60 --focus 32:38 -o part.svg
+build/bin/sweetshot main.cpp --theme default --lines 20:60 --focus 32:38 -o part.svg
 cat main.cpp | build/bin/sweetshot --lang cpp -o stdin.html
 ```
 

@@ -45,7 +45,7 @@ namespace sweetshot {
     std::string language_hint;
     std::string syntax_directory;
     RenderOptions options;
-    Theme theme {builtinTheme("sweetline-dark")};
+    Theme theme {builtinTheme("default")};
   };
 }
 

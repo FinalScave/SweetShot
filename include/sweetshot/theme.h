@@ -49,7 +49,7 @@ namespace sweetshot {
     TextStyle styleForToken(int32_t style_id) const;
   };
 
-  Theme sweetLineDarkTheme();
+  Theme defaultTheme();
   Theme monokaiTheme();
   Theme draculaTheme();
   Theme githubLightTheme();

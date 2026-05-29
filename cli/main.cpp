@@ -15,7 +15,7 @@ namespace {
     std::string input_path;
     std::string output_path;
     std::string language;
-    std::string theme {"sweetline-dark"};
+    std::string theme {"default"};
     std::string syntax_directory;
     sweetshot::RenderOptions render_options;
   };
@@ -26,7 +26,7 @@ namespace {
            << "Options:\n"
            << "  -o, --output <path>       Write SVG or HTML output\n"
            << "  --lang <name>            Override language detection\n"
-           << "  --theme <name>           sweetline-dark, monokai, dracula, one-dark, solarized-dark, nord, or github-dark\n"
+           << "  --theme <name>           default, monokai, dracula, one-dark, solarized-dark, nord, github-dark, or github-light\n"
            << "  --syntax-dir <path>      Override SweetLine syntax directory\n"
            << "  --lines <start:end>      Render a one-based inclusive line range\n"
            << "  --focus <range-list>     Highlight one-based lines, such as 4 or 4:8,12\n"

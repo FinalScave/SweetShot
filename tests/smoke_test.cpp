@@ -41,7 +41,7 @@ TEST_CASE("Renderer produces highlighted scenes and outputs") {
   const sweetshot::RenderScene scene = renderer.renderScene(input);
   REQUIRE(scene.lines.size() == 4);
   REQUIRE(scene.language == "cpp");
-  REQUIRE(scene.theme.name == "sweetline-dark");
+  REQUIRE(scene.theme.name == "default");
   const auto return_run = std::find_if(scene.lines[1].runs.begin(), scene.lines[1].runs.end(), [](const auto& run) {
     return run.text == "return";
   });
@@ -191,7 +191,7 @@ TEST_CASE("Renderer keeps scoped indent guides inside scope markers") {
 
 TEST_CASE("Builtin themes follow SweetLine defaults") {
   const sweetshot::Theme default_theme = sweetshot::builtinTheme("");
-  REQUIRE(default_theme.name == "sweetline-dark");
+  REQUIRE(default_theme.name == "default");
   REQUIRE(default_theme.background == "#1e1e1e");
   REQUIRE(default_theme.foreground == "#d4d4d4");
   REQUIRE(default_theme.indent_guide_foreground == "#5e5e5e");
@@ -199,10 +199,11 @@ TEST_CASE("Builtin themes follow SweetLine defaults") {
   REQUIRE(default_theme.styleForToken(sweetshot::token_style_id::Builtin).foreground == "#569cd6");
   REQUIRE(default_theme.styleForToken(sweetshot::token_style_id::Property).foreground == "#9cdcfe");
 
-  REQUIRE(sweetshot::builtinTheme("SweetLine Dark").name == "sweetline-dark");
-  REQUIRE(sweetshot::builtinTheme("sweetline-dark").name == "sweetline-dark");
+  REQUIRE(sweetshot::builtinTheme("default").name == "default");
+  REQUIRE(sweetshot::builtinTheme("SweetLine Dark").name == "default");
+  REQUIRE(sweetshot::builtinTheme("sweetline-dark").name == "default");
   REQUIRE(sweetshot::builtinTheme("solarized dark").name == "solarized-dark");
-  REQUIRE(sweetshot::builtinTheme("unknown").name == "sweetline-dark");
+  REQUIRE(sweetshot::builtinTheme("unknown").name == "default");
   REQUIRE(sweetshot::builtinTheme("nord").styleForToken(sweetshot::token_style_id::Builtin).foreground == "#5e81ac");
 }
 

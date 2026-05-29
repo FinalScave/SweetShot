@@ -143,8 +143,8 @@ namespace sweetshot {
     return {foreground, ""};
   }
 
-  Theme sweetLineDarkTheme() {
-    return makeTheme("sweetline-dark", "#1e1e1e", "#d4d4d4", {
+  Theme defaultTheme() {
+    return makeTheme("default", "#1e1e1e", "#d4d4d4", {
       "#569cd6", "#bd63c5", "#e4fad5", "#60ae6f", "#4ec9b0", "#9cdcfe", "#9b9bc8", "#d69d85",
       "#fffd9b", "#569cd6", "#9b9bc8", "#4ec9b0", "#4ec9b0", "#569cd6", "#4fc1ff", "#9cdcfe"
     });
@@ -202,7 +202,7 @@ namespace sweetshot {
   Theme builtinTheme(const std::string& name) {
     const std::string normalized = normalizeThemeName(name);
     if (normalized.empty() || normalized == "sweetlinedark" || normalized == "default" || normalized == "dark") {
-      return sweetLineDarkTheme();
+      return defaultTheme();
     }
     if (normalized == "monokai") {
       return monokaiTheme();
@@ -225,6 +225,6 @@ namespace sweetshot {
     if (normalized == "githublight" || normalized == "light") {
       return githubLightTheme();
     }
-    return sweetLineDarkTheme();
+    return defaultTheme();
   }
 }
