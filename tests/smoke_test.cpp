@@ -17,6 +17,16 @@ namespace {
     INFO("Expected output to omit: " << unexpected);
     REQUIRE(value.find(unexpected) == std::string::npos);
   }
+
+  std::size_t countOccurrences(const std::string& value, const std::string& needle) {
+    std::size_t count = 0;
+    std::size_t offset = 0;
+    while ((offset = value.find(needle, offset)) != std::string::npos) {
+      ++count;
+      offset += needle.size();
+    }
+    return count;
+  }
 }
 
 TEST_CASE("Renderer produces highlighted scenes and outputs") {
@@ -52,6 +62,21 @@ TEST_CASE("Renderer produces highlighted scenes and outputs") {
   requireContains(html, "sweetshot-line focus");
   requireContains(html, "<div class=\"sweetshot\">");
   requireNotContains(html, "<pre class=\"sweetshot\">");
+}
+
+TEST_CASE("Renderer emits SVG code lines as continuous tspans") {
+  sweetshot::RenderInput input;
+  input.source_text = "return value;";
+  input.file_name = "main.cpp";
+  input.language_hint = "cpp";
+  input.syntax_directory = SWEETSHOT_TEST_SYNTAX_DIR;
+  input.options.show_line_numbers = false;
+
+  sweetshot::Renderer renderer;
+  const std::string svg = renderer.renderToSvg(input);
+  REQUIRE(countOccurrences(svg, "<text ") == 1);
+  requireContains(svg, "<tspan");
+  requireContains(svg, ">return</tspan>");
 }
 
 TEST_CASE("Builtin themes follow SweetLine defaults") {

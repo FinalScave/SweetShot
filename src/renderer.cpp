@@ -557,12 +557,19 @@ namespace sweetshot {
             << (line.source_line + 1) << "</text>\n";
       }
 
-      for (const TextRun& run : line.runs) {
-        if (run.text.empty()) {
-          continue;
+      const bool has_text = std::any_of(line.runs.begin(), line.runs.end(), [](const TextRun& run) {
+        return !run.text.empty();
+      });
+      if (has_text) {
+        svg << "<text x=\"" << scene.text_origin_x << "\" y=\"" << line.y + scene.options.font_size
+            << "\" xml:space=\"preserve\">";
+        for (const TextRun& run : line.runs) {
+          if (run.text.empty()) {
+            continue;
+          }
+          svg << "<tspan" << svgFontStyle(run.style) << ">" << escapeXml(run.text) << "</tspan>";
         }
-        svg << "<text x=\"" << run.x << "\" y=\"" << run.y << "\""
-            << svgFontStyle(run.style) << ">" << escapeXml(run.text) << "</text>\n";
+        svg << "</text>\n";
       }
     }
     svg << "</g>\n</svg>\n";
