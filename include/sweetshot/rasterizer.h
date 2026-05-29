@@ -24,6 +24,11 @@ namespace sweetshot {
 
     virtual PngResult Rasterize(std::string_view svg, const PngOptions& options) = 0;
   };
+
+  class ResvgRasterizer final : public SvgRasterizer {
+  public:
+    PngResult Rasterize(std::string_view svg, const PngOptions& options) override;
+  };
 }
 
 #endif

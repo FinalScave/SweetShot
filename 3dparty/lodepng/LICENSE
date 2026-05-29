@@ -1,0 +1,5 @@
+LodePNG is licensed under the zlib license.
+
+The dependency is fetched from https://github.com/lvandeve/lodepng.git at
+commit ed6fe5825c6a4fbb7f58ab35a4231c7543cd452a. See the upstream lodepng.h
+file for the full license text.

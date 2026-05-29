@@ -1,11 +1,15 @@
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "sweetshot/sweetshot.h"
@@ -17,16 +21,18 @@ namespace {
     std::string language;
     std::string theme {"default"};
     std::string syntax_directory;
+    double png_scale {2.0};
     sweetshot::RenderOptions render_options;
   };
 
   void PrintUsage(std::ostream& output) {
-    output << "Usage: sweetshot [file|-] -o output.svg [options]\n"
+    output << "Usage: sweetshot [file|-] -o output.{svg|png|html} [options]\n"
            << "\n"
            << "Options:\n"
-           << "  -o, --output <path>       Write SVG or HTML output\n"
+           << "  -o, --output <path>       Write SVG, PNG, or HTML output\n"
            << "  --lang <name>            Override language detection\n"
            << "  --theme <name>           default, monokai, dracula, one-dark, solarized-dark, nord, github-dark, or github-light\n"
+           << "  --scale <factor>         PNG output scale factor, defaults to 2\n"
            << "  --syntax-dir <path>      Override SweetLine syntax directory\n"
            << "  --lines <start:end>      Render a one-based inclusive line range\n"
            << "  --focus <range-list>     Highlight one-based lines, such as 4 or 4:8,12\n"
@@ -52,12 +58,16 @@ namespace {
     return buffer.str();
   }
 
-  void WriteFile(const std::string& path, const std::string& content) {
+  void WriteFile(const std::string& path, std::string_view content) {
     std::ofstream output(path, std::ios::binary);
     if (!output) {
       throw std::runtime_error("Unable to write output file: " + path);
     }
-    output << content;
+    output.write(content.data(), static_cast<std::streamsize>(content.size()));
+  }
+
+  void WriteFile(const std::string& path, const std::vector<std::uint8_t>& content) {
+    WriteFile(path, std::string_view(reinterpret_cast<const char*>(content.data()), content.size()));
   }
 
   std::size_t ParsePositiveLine(const std::string& value) {
@@ -66,6 +76,15 @@ namespace {
       throw std::runtime_error("Line numbers are one-based");
     }
     return parsed - 1;
+  }
+
+  double ParsePositiveScale(const std::string& value) {
+    std::size_t parsed_chars = 0;
+    const double parsed = std::stod(value, &parsed_chars);
+    if (parsed_chars != value.size() || !std::isfinite(parsed) || parsed <= 0.0) {
+      throw std::runtime_error("PNG scale must be a positive number");
+    }
+    return parsed;
   }
 
   std::vector<std::string> Split(const std::string& value, char delimiter) {
@@ -155,6 +174,8 @@ namespace {
         options.language = RequireValue(index, argc, argv, arg);
       } else if (arg == "--theme") {
         options.theme = RequireValue(index, argc, argv, arg);
+      } else if (arg == "--scale") {
+        options.png_scale = ParsePositiveScale(RequireValue(index, argc, argv, arg));
       } else if (arg == "--syntax-dir") {
         options.syntax_directory = RequireValue(index, argc, argv, arg);
       } else if (arg == "--lines") {
@@ -195,17 +216,25 @@ int main(int argc, char* argv[]) {
     input.theme = sweetshot::BuiltinTheme(cli.theme);
     input.source_text = cli.input_path.empty() || cli.input_path == "-" ? ReadStdin() : ReadFile(cli.input_path);
 
-    sweetshot::Renderer renderer;
+    sweetshot::RendererConfig config;
+    config.png_rasterizer = std::make_shared<sweetshot::ResvgRasterizer>();
+    sweetshot::Renderer renderer(config);
     std::string output;
     if (HasExtension(cli.output_path, ".html")) {
       output = renderer.RenderToHtml(input);
+      WriteFile(cli.output_path, output);
     } else if (HasExtension(cli.output_path, ".svg")) {
       output = renderer.RenderToSvg(input);
+      WriteFile(cli.output_path, output);
+    } else if (HasExtension(cli.output_path, ".png")) {
+      sweetshot::PngOptions png_options;
+      png_options.scale = cli.png_scale;
+      const sweetshot::PngResult png = renderer.RenderToPng(input, png_options);
+      WriteFile(cli.output_path, png.bytes);
     } else {
-      throw std::runtime_error("Only SVG and HTML output are supported right now");
+      throw std::runtime_error("Only SVG, PNG, and HTML output are supported right now");
     }
 
-    WriteFile(cli.output_path, output);
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "sweetshot: " << error.what() << "\n";

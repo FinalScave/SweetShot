@@ -1,0 +1,5 @@
+resvg is licensed under either Apache-2.0 or MIT.
+
+The dependency is fetched from https://github.com/linebender/resvg.git at
+version 0.47.0. See the upstream LICENSE-APACHE and LICENSE-MIT files for the
+full license texts.

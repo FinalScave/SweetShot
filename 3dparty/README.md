@@ -17,6 +17,8 @@ through `sweetshot_3p.cmake`. Project CMake code should include
 Current dependencies:
 
 - `catch2` provides `SweetShot3p::Catch2`.
+- `lodepng` fetches LodePNG and provides `SweetShot3p::lodepng`.
+- `resvg` fetches resvg and provides `SweetShot3p::resvg`.
 - `sweetline` fetches SweetLine and provides `SweetLine::sweetline_static`.
 
 The SweetLine wrapper also sets `SWEETSHOT_3P_SWEETLINE_SOURCE_DIR` for paths

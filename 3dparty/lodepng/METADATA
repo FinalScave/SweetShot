@@ -1,0 +1,5 @@
+Name: LodePNG
+Version: ed6fe5825c6a4fbb7f58ab35a4231c7543cd452a
+Source: https://github.com/lvandeve/lodepng.git
+License: Zlib
+Retrieved-Files: CMake FetchContent builds lodepng.cpp

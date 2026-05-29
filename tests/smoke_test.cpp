@@ -131,6 +131,47 @@ TEST_CASE("Renderer reports missing PNG rasterizer") {
   REQUIRE_THROWS_WITH(renderer.RenderToPng(input), "PNG rasterizer is not configured");
 }
 
+TEST_CASE("Resvg rasterizer renders PNG bytes") {
+  sweetshot::ResvgRasterizer rasterizer;
+  const sweetshot::PngResult png = rasterizer.Rasterize(
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"3\" height=\"2\">"
+    "<rect width=\"3\" height=\"2\" fill=\"#ff0000\"/></svg>",
+    {});
+
+  REQUIRE(png.width == 3);
+  REQUIRE(png.height == 2);
+  REQUIRE(png.bytes.size() > 8);
+  REQUIRE(png.bytes[0] == 137);
+  REQUIRE(png.bytes[1] == 80);
+  REQUIRE(png.bytes[2] == 78);
+  REQUIRE(png.bytes[3] == 71);
+}
+
+TEST_CASE("Resvg rasterizer applies PNG scale") {
+  sweetshot::ResvgRasterizer rasterizer;
+  sweetshot::PngOptions options;
+  options.scale = 2.0;
+
+  const sweetshot::PngResult png = rasterizer.Rasterize(
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"3\" height=\"2\">"
+    "<rect width=\"3\" height=\"2\" fill=\"#ff0000\"/></svg>",
+    options);
+
+  REQUIRE(png.width == 6);
+  REQUIRE(png.height == 4);
+}
+
+TEST_CASE("Resvg rasterizer writes compressed PNG bytes") {
+  sweetshot::ResvgRasterizer rasterizer;
+  const sweetshot::PngResult png = rasterizer.Rasterize(
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"128\" height=\"128\">"
+    "<rect width=\"128\" height=\"128\" fill=\"#ff0000\"/></svg>",
+    {});
+
+  const std::size_t raw_scanline_size = png.height * (png.width * 4 + 1);
+  REQUIRE(png.bytes.size() < raw_scanline_size / 4);
+}
+
 TEST_CASE("Renderer emits indent guides") {
   const std::filesystem::path syntax_directory =
     std::filesystem::temp_directory_path() / "sweetshot-indent-guide-syntax-test";

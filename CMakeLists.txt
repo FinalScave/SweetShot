@@ -27,6 +27,7 @@ set(SWEETSHOT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
 add_library(sweetshot_core STATIC
         ${SWEETSHOT_SRC_DIR}/renderer.cpp
+        ${SWEETSHOT_SRC_DIR}/resvg_rasterizer.cpp
         ${SWEETSHOT_SRC_DIR}/theme.cpp
 )
 add_library(SweetShot::core ALIAS sweetshot_core)
@@ -40,7 +41,11 @@ target_include_directories(sweetshot_core
 target_compile_definitions(sweetshot_core PRIVATE
         SWEETSHOT_DEFAULT_SYNTAX_DIR="${SWEETSHOT_3P_SWEETLINE_SOURCE_DIR}/syntaxes"
 )
-target_link_libraries(sweetshot_core PUBLIC SweetLine::sweetline_static)
+target_link_libraries(sweetshot_core PUBLIC
+        SweetLine::sweetline_static
+        SweetShot3p::resvg
+)
+target_link_libraries(sweetshot_core PRIVATE SweetShot3p::lodepng)
 
 if (MSVC)
     target_compile_options(sweetshot_core PRIVATE /Zc:__cplusplus /utf-8)
@@ -50,6 +55,13 @@ endif ()
 if (SWEETSHOT_BUILD_CLI)
     add_executable(sweetshot cli/main.cpp)
     target_link_libraries(sweetshot PRIVATE SweetShot::core)
+    if (WIN32)
+        add_custom_command(TARGET sweetshot POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:SweetShot3p::resvg>
+                $<TARGET_FILE_DIR:sweetshot>
+        )
+    endif ()
 endif ()
 
 if (SWEETSHOT_BUILD_TESTS)

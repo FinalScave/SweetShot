@@ -1,0 +1,5 @@
+Name: resvg
+Version: 0.47.0
+Source: https://github.com/linebender/resvg.git
+License: Apache-2.0 OR MIT
+Retrieved-Files: CMake FetchContent builds crates/c-api with Cargo
