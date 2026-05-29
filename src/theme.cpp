@@ -23,40 +23,32 @@ namespace sweetshot {
       const std::string punctuation = dark ? "#c9d1d9" : "#24292f";
       const std::string builtin = dark ? "#7ee787" : "#116329";
 
-      theme.token_styles["default"] = {theme.foreground, ""};
-      theme.token_styles["keyword"] = {keyword, "", true};
-      theme.token_styles["string"] = {string, ""};
-      theme.token_styles["number"] = {number, ""};
-      theme.token_styles["comment"] = {comment, "", false, true};
-      theme.token_styles["class"] = {type, ""};
-      theme.token_styles["type"] = {type, ""};
-      theme.token_styles["method"] = {function, ""};
-      theme.token_styles["function"] = {function, ""};
-      theme.token_styles["variable"] = {variable, ""};
-      theme.token_styles["punctuation"] = {punctuation, ""};
-      theme.token_styles["operator"] = {punctuation, ""};
-      theme.token_styles["annotation"] = {builtin, ""};
-      theme.token_styles["builtin"] = {builtin, ""};
-      theme.token_styles["preprocessor"] = {keyword, ""};
-      theme.token_styles["macro"] = {keyword, ""};
-      theme.token_styles["property"] = {variable, ""};
-      theme.token_styles["selector"] = {function, ""};
-      theme.token_styles["url"] = {string, "", false, false, true};
-      theme.token_styles["tag"] = {keyword, ""};
-      theme.token_styles["attribute"] = {variable, ""};
-      theme.token_styles["constant"] = {number, ""};
-      theme.token_styles["namespace"] = {type, ""};
-      theme.token_styles["regexp"] = {string, ""};
-      theme.token_styles["escape"] = {number, ""};
+      theme.token_styles[token_style_id::Default] = {theme.foreground, ""};
+      theme.token_styles[token_style_id::Keyword] = {keyword, "", true};
+      theme.token_styles[token_style_id::String] = {string, ""};
+      theme.token_styles[token_style_id::Number] = {number, ""};
+      theme.token_styles[token_style_id::Comment] = {comment, "", false, true};
+      theme.token_styles[token_style_id::Class] = {type, ""};
+      theme.token_styles[token_style_id::Method] = {function, ""};
+      theme.token_styles[token_style_id::Variable] = {variable, ""};
+      theme.token_styles[token_style_id::Punctuation] = {punctuation, ""};
+      theme.token_styles[token_style_id::Annotation] = {builtin, ""};
+      theme.token_styles[token_style_id::Builtin] = {builtin, ""};
+      theme.token_styles[token_style_id::Preprocessor] = {keyword, ""};
+      theme.token_styles[token_style_id::Macro] = {keyword, ""};
+      theme.token_styles[token_style_id::Property] = {variable, ""};
+      theme.token_styles[token_style_id::Lifetime] = {type, ""};
+      theme.token_styles[token_style_id::Selector] = {function, ""};
+      theme.token_styles[token_style_id::Url] = {string, "", false, false, true};
     }
   }
 
-  TextStyle Theme::styleForToken(const std::string& style_name) const {
-    const auto it = token_styles.find(style_name);
+  TextStyle Theme::styleForToken(int32_t style_id) const {
+    const auto it = token_styles.find(style_id);
     if (it != token_styles.end()) {
       return it->second;
     }
-    const auto default_it = token_styles.find("default");
+    const auto default_it = token_styles.find(token_style_id::Default);
     if (default_it != token_styles.end()) {
       return default_it->second;
     }
@@ -101,31 +93,23 @@ namespace sweetshot {
     theme.gutter_border = "#3b4048";
     theme.focus_background = "#333842";
     theme.mark_background = "#2b3a48";
-    theme.token_styles["default"] = {theme.foreground, ""};
-    theme.token_styles["keyword"] = {"#c678dd", "", true};
-    theme.token_styles["string"] = {"#98c379", ""};
-    theme.token_styles["number"] = {"#d19a66", ""};
-    theme.token_styles["comment"] = {"#7f848e", "", false, true};
-    theme.token_styles["class"] = {"#e5c07b", ""};
-    theme.token_styles["type"] = {"#e5c07b", ""};
-    theme.token_styles["method"] = {"#61afef", ""};
-    theme.token_styles["function"] = {"#61afef", ""};
-    theme.token_styles["variable"] = {"#e06c75", ""};
-    theme.token_styles["punctuation"] = {"#abb2bf", ""};
-    theme.token_styles["operator"] = {"#56b6c2", ""};
-    theme.token_styles["annotation"] = {"#56b6c2", ""};
-    theme.token_styles["builtin"] = {"#56b6c2", ""};
-    theme.token_styles["preprocessor"] = {"#c678dd", ""};
-    theme.token_styles["macro"] = {"#c678dd", ""};
-    theme.token_styles["property"] = {"#e06c75", ""};
-    theme.token_styles["selector"] = {"#61afef", ""};
-    theme.token_styles["url"] = {"#98c379", "", false, false, true};
-    theme.token_styles["tag"] = {"#e06c75", ""};
-    theme.token_styles["attribute"] = {"#d19a66", ""};
-    theme.token_styles["constant"] = {"#d19a66", ""};
-    theme.token_styles["namespace"] = {"#e5c07b", ""};
-    theme.token_styles["regexp"] = {"#98c379", ""};
-    theme.token_styles["escape"] = {"#d19a66", ""};
+    theme.token_styles[token_style_id::Default] = {theme.foreground, ""};
+    theme.token_styles[token_style_id::Keyword] = {"#c678dd", "", true};
+    theme.token_styles[token_style_id::String] = {"#98c379", ""};
+    theme.token_styles[token_style_id::Number] = {"#d19a66", ""};
+    theme.token_styles[token_style_id::Comment] = {"#7f848e", "", false, true};
+    theme.token_styles[token_style_id::Class] = {"#e5c07b", ""};
+    theme.token_styles[token_style_id::Method] = {"#61afef", ""};
+    theme.token_styles[token_style_id::Variable] = {"#e06c75", ""};
+    theme.token_styles[token_style_id::Punctuation] = {"#abb2bf", ""};
+    theme.token_styles[token_style_id::Annotation] = {"#56b6c2", ""};
+    theme.token_styles[token_style_id::Builtin] = {"#56b6c2", ""};
+    theme.token_styles[token_style_id::Preprocessor] = {"#c678dd", ""};
+    theme.token_styles[token_style_id::Macro] = {"#c678dd", ""};
+    theme.token_styles[token_style_id::Property] = {"#e06c75", ""};
+    theme.token_styles[token_style_id::Lifetime] = {"#e5c07b", ""};
+    theme.token_styles[token_style_id::Selector] = {"#61afef", ""};
+    theme.token_styles[token_style_id::Url] = {"#98c379", "", false, false, true};
     return theme;
   }
 

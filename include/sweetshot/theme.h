@@ -1,10 +1,31 @@
 #ifndef SWEETSHOT_THEME_H
 #define SWEETSHOT_THEME_H
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 
 namespace sweetshot {
+  namespace token_style_id {
+    inline constexpr int32_t Default = 0;
+    inline constexpr int32_t Keyword = 1;
+    inline constexpr int32_t String = 2;
+    inline constexpr int32_t Number = 3;
+    inline constexpr int32_t Comment = 4;
+    inline constexpr int32_t Class = 5;
+    inline constexpr int32_t Method = 6;
+    inline constexpr int32_t Variable = 7;
+    inline constexpr int32_t Punctuation = 8;
+    inline constexpr int32_t Annotation = 9;
+    inline constexpr int32_t Builtin = 10;
+    inline constexpr int32_t Preprocessor = 11;
+    inline constexpr int32_t Macro = 12;
+    inline constexpr int32_t Property = 13;
+    inline constexpr int32_t Lifetime = 14;
+    inline constexpr int32_t Selector = 15;
+    inline constexpr int32_t Url = 16;
+  }
+
   struct TextStyle {
     std::string foreground;
     std::string background;
@@ -22,9 +43,9 @@ namespace sweetshot {
     std::string gutter_border;
     std::string focus_background;
     std::string mark_background;
-    std::unordered_map<std::string, TextStyle> token_styles;
+    std::unordered_map<int32_t, TextStyle> token_styles;
 
-    TextStyle styleForToken(const std::string& style_name) const;
+    TextStyle styleForToken(int32_t style_id) const;
   };
 
   Theme githubLightTheme();

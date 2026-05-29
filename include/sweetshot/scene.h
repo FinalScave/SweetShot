@@ -15,7 +15,6 @@ namespace sweetshot {
     double x {0.0};
     double y {0.0};
     std::string text;
-    std::string style_name;
     int32_t style_id {0};
     TextStyle style;
   };

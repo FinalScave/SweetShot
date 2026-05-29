@@ -1,13 +1,11 @@
 #include "sweetshot/renderer.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <filesystem>
 #include <memory>
 #include <mutex>
 #include <sstream>
-#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -35,7 +33,6 @@ namespace sweetshot {
       std::size_t start_column {0};
       std::size_t end_column {0};
       std::string text;
-      std::string style_name;
       int32_t style_id {0};
     };
 
@@ -43,76 +40,6 @@ namespace sweetshot {
       std::string language;
       std::vector<std::vector<HighlightSegment>> lines;
     };
-
-    std::string toLower(std::string value) {
-      std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-      });
-      return value;
-    }
-
-    std::string fileNameOf(const std::string& path) {
-      const std::filesystem::path file_path(path);
-      return file_path.filename().string();
-    }
-
-    std::string extensionOf(const std::string& path) {
-      const std::filesystem::path file_path(path);
-      std::string extension = file_path.extension().string();
-      if (!extension.empty() && extension.front() == '.') {
-        extension.erase(extension.begin());
-      }
-      return toLower(extension);
-    }
-
-    std::string normalizeLanguage(std::string language) {
-      language = toLower(language);
-      if (language == "c++" || language == "cxx" || language == "hpp" || language == "cc") {
-        return "cpp";
-      }
-      if (language == "js") {
-        return "javascript";
-      }
-      if (language == "ts") {
-        return "typescript";
-      }
-      if (language == "py") {
-        return "python";
-      }
-      if (language == "sh" || language == "bash" || language == "zsh") {
-        return "shell";
-      }
-      if (language == "md") {
-        return "markdown";
-      }
-      if (language == "yml") {
-        return "yaml";
-      }
-      return language;
-    }
-
-    std::string inferLanguageName(const RenderInput& input) {
-      if (!input.language_hint.empty()) {
-        return normalizeLanguage(input.language_hint);
-      }
-
-      const std::string file_name = fileNameOf(input.file_name);
-      const std::string lower_name = toLower(file_name);
-      if (lower_name == "dockerfile") {
-        return "dockerfile";
-      }
-      if (lower_name == "makefile" || lower_name == "gnumakefile") {
-        return "makefile";
-      }
-      if (lower_name == "cmakelists.txt") {
-        return "cmake";
-      }
-      if (lower_name == ".gitignore") {
-        return "gitignore";
-      }
-
-      return normalizeLanguage(extensionOf(input.file_name));
-    }
 
     std::string effectiveSyntaxDirectory(const RenderInput& input, const RendererConfig& config) {
       if (!input.syntax_directory.empty()) {
@@ -124,12 +51,11 @@ namespace sweetshot {
       return SWEETSHOT_DEFAULT_SYNTAX_DIR;
     }
 
-    std::string syntaxPathForLanguage(const std::string& syntax_directory, const std::string& language) {
-      if (syntax_directory.empty() || language.empty()) {
-        return "";
-      }
-      const std::filesystem::path syntax_path = std::filesystem::path(syntax_directory) / (language + ".json");
-      return syntax_path.string();
+    bool isInlineStyleSyntaxFile(const std::filesystem::path& path) {
+      const std::string filename = path.filename().string();
+      const std::string suffix = "-inlineStyle.json";
+      return filename.size() >= suffix.size()
+        && filename.compare(filename.size() - suffix.size(), suffix.size(), suffix) == 0;
     }
 
     std::vector<std::string> listSyntaxFiles(const std::string& syntax_directory) {
@@ -138,7 +64,8 @@ namespace sweetshot {
         return result;
       }
       for (const auto& entry : std::filesystem::directory_iterator(syntax_directory)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".json") {
+        if (entry.is_regular_file() && entry.path().extension() == ".json"
+            && !isInlineStyleSyntaxFile(entry.path())) {
           result.push_back(entry.path().string());
         }
       }
@@ -150,6 +77,26 @@ namespace sweetshot {
       return syntax_directory + "\n" + std::to_string(std::max<std::size_t>(tab_size, 1));
     }
 
+    void registerTokenStyles(const sweetline::SharedPtr<sweetline::HighlightEngine>& engine) {
+      engine->registerStyleName("default", token_style_id::Default);
+      engine->registerStyleName("keyword", token_style_id::Keyword);
+      engine->registerStyleName("string", token_style_id::String);
+      engine->registerStyleName("number", token_style_id::Number);
+      engine->registerStyleName("comment", token_style_id::Comment);
+      engine->registerStyleName("class", token_style_id::Class);
+      engine->registerStyleName("method", token_style_id::Method);
+      engine->registerStyleName("variable", token_style_id::Variable);
+      engine->registerStyleName("punctuation", token_style_id::Punctuation);
+      engine->registerStyleName("annotation", token_style_id::Annotation);
+      engine->registerStyleName("builtin", token_style_id::Builtin);
+      engine->registerStyleName("preprocessor", token_style_id::Preprocessor);
+      engine->registerStyleName("macro", token_style_id::Macro);
+      engine->registerStyleName("property", token_style_id::Property);
+      engine->registerStyleName("lifetime", token_style_id::Lifetime);
+      engine->registerStyleName("selector", token_style_id::Selector);
+      engine->registerStyleName("url", token_style_id::Url);
+    }
+
     RendererState::CachedEngine& cachedEngine(RendererState& state, const RenderInput& input,
                                               const RendererConfig& config) {
       const std::string syntax_directory = effectiveSyntaxDirectory(input, config);
@@ -159,6 +106,7 @@ namespace sweetshot {
         sweetline::HighlightConfig highlight_config = sweetline::HighlightConfig::kDefault;
         highlight_config.tab_size = static_cast<int32_t>(std::max<std::size_t>(input.options.tab_size, 1));
         cached.engine = sweetline::makeSharedPtr<sweetline::HighlightEngine>(highlight_config);
+        registerTokenStyles(cached.engine);
       }
       return cached;
     }
@@ -191,56 +139,32 @@ namespace sweetshot {
       cached.directory_compiled = true;
     }
 
-    sweetline::SharedPtr<sweetline::SyntaxRule> compileSyntaxForInput(
-      RendererState::CachedEngine& cached,
-      const RenderInput& input,
-      const std::string& syntax_directory) {
+    struct AnalyzerSelection {
+      sweetline::SharedPtr<sweetline::TextAnalyzer> analyzer;
+      std::string language;
+    };
+
+    AnalyzerSelection createAnalyzerForInput(RendererState::CachedEngine& cached, const RenderInput& input) {
       const sweetline::SharedPtr<sweetline::HighlightEngine>& engine = cached.engine;
-      const std::string language = inferLanguageName(input);
-      if (!language.empty()) {
-        sweetline::SharedPtr<sweetline::SyntaxRule> rule = engine->getSyntaxRuleByName(language);
-        if (rule != nullptr) {
-          return rule;
-        }
-      }
-      if (!input.file_name.empty()) {
-        sweetline::SharedPtr<sweetline::SyntaxRule> rule = engine->getSyntaxRuleByFileName(input.file_name);
-        if (rule != nullptr) {
-          return rule;
+      sweetline::SharedPtr<sweetline::SyntaxRule> rule;
+      if (!input.language_hint.empty()) {
+        rule = engine->getSyntaxRuleByName(input.language_hint);
+        if (rule == nullptr) {
+          rule = engine->getSyntaxRuleByFileName("input." + input.language_hint);
         }
       }
 
-      const std::string syntax_path = syntaxPathForLanguage(syntax_directory, language);
-
-      if (!syntax_path.empty() && std::filesystem::is_regular_file(syntax_path)) {
-        try {
-          return engine->compileSyntaxFromFile(syntax_path);
-        } catch (const sweetline::SyntaxCompileError&) {
-          compileSyntaxDirectory(cached, syntax_directory);
-          if (!language.empty()) {
-            sweetline::SharedPtr<sweetline::SyntaxRule> rule = engine->getSyntaxRuleByName(language);
-            if (rule != nullptr) {
-              return rule;
-            }
-          }
-          if (!input.file_name.empty()) {
-            return engine->getSyntaxRuleByFileName(input.file_name);
-          }
-          throw;
-        }
+      if (rule == nullptr && !input.file_name.empty()) {
+        rule = engine->getSyntaxRuleByFileName(input.file_name);
+      }
+      if (rule == nullptr) {
+        return {};
       }
 
-      compileSyntaxDirectory(cached, syntax_directory);
-      if (!language.empty()) {
-        sweetline::SharedPtr<sweetline::SyntaxRule> rule = engine->getSyntaxRuleByName(language);
-        if (rule != nullptr) {
-          return rule;
-        }
-      }
-      if (!input.file_name.empty()) {
-        return engine->getSyntaxRuleByFileName(input.file_name);
-      }
-      return nullptr;
+      AnalyzerSelection selection;
+      selection.language = rule->name;
+      selection.analyzer = engine->createAnalyzerBySyntaxName(rule->name);
+      return selection;
     }
 
     std::string expandTabs(const std::string& text, std::size_t tab_size) {
@@ -306,18 +230,13 @@ namespace sweetshot {
       const std::string syntax_directory = effectiveSyntaxDirectory(input, config);
       std::lock_guard<std::mutex> lock(state.mutex);
       RendererState::CachedEngine& cached = cachedEngine(state, input, config);
-      const sweetline::SharedPtr<sweetline::HighlightEngine>& engine = cached.engine;
-      sweetline::SharedPtr<sweetline::SyntaxRule> rule = compileSyntaxForInput(cached, input, syntax_directory);
-      if (rule == nullptr) {
+      compileSyntaxDirectory(cached, syntax_directory);
+      AnalyzerSelection selection = createAnalyzerForInput(cached, input);
+      if (selection.analyzer == nullptr) {
         return result;
       }
-
-      result.language = rule->name;
-      sweetline::SharedPtr<sweetline::TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName(rule->name);
-      if (analyzer == nullptr) {
-        return result;
-      }
-      sweetline::SharedPtr<sweetline::DocumentHighlight> highlight = analyzer->analyzeText(input.source_text);
+      result.language = selection.language;
+      sweetline::SharedPtr<sweetline::DocumentHighlight> highlight = selection.analyzer->analyzeText(input.source_text);
       if (highlight == nullptr) {
         return result;
       }
@@ -335,7 +254,6 @@ namespace sweetshot {
           segment.text = utf8Substr(source_lines[line_index], segment.start_column,
                                     segment.end_column - segment.start_column);
           segment.style_id = span.style_id;
-          segment.style_name = engine->getStyleName(span.style_id);
           result.lines[line_index].push_back(std::move(segment));
         }
       }
@@ -354,7 +272,6 @@ namespace sweetshot {
           plain.start_column = cursor;
           plain.end_column = segment.start_column;
           plain.text = utf8Substr(line, cursor, segment.start_column - cursor);
-          plain.style_name = "default";
           result.push_back(std::move(plain));
         }
         if (!segment.text.empty()) {
@@ -368,13 +285,11 @@ namespace sweetshot {
         plain.start_column = cursor;
         plain.end_column = total_columns;
         plain.text = utf8Substr(line, cursor, total_columns - cursor);
-        plain.style_name = "default";
         result.push_back(std::move(plain));
       }
 
       if (result.empty()) {
         HighlightSegment empty;
-        empty.style_name = "default";
         result.push_back(std::move(empty));
       }
       return result;
@@ -446,7 +361,6 @@ namespace sweetshot {
         sliced.start_column = start;
         sliced.end_column = end;
         sliced.text = utf8Substr(line, start, end - start);
-        sliced.style_name = segment.style_name;
         sliced.style_id = segment.style_id;
         result.push_back(std::move(sliced));
       }
@@ -455,7 +369,6 @@ namespace sweetshot {
         HighlightSegment empty;
         empty.start_column = start_column;
         empty.end_column = start_column;
-        empty.style_name = "default";
         result.push_back(std::move(empty));
       }
       return result;
@@ -589,9 +502,8 @@ namespace sweetshot {
             + static_cast<double>(segment.start_column - range.start_column) * scene.char_width;
           run.y = scene_line.y + input.options.font_size;
           run.text = segment.text;
-          run.style_name = segment.style_name;
           run.style_id = segment.style_id;
-          run.style = input.theme.styleForToken(segment.style_name);
+          run.style = input.theme.styleForToken(segment.style_id);
           scene_line.runs.push_back(std::move(run));
         }
         scene.lines.push_back(std::move(scene_line));
