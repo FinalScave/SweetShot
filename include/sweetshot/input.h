@@ -26,7 +26,7 @@ namespace sweetshot {
     double font_size {14.0};
     double line_height {22.0};
     double padding_x {24.0};
-    double padding_y {20.0};
+    double padding_y {0};
     double gutter_width {48.0};
     double max_width {1200.0};
     std::string font_family {
