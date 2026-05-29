@@ -291,7 +291,7 @@ TEST_CASE("Builtin themes include editor default and VS Code dark") {
   REQUIRE(default_theme.background == "#1b1e24");
   REQUIRE(default_theme.foreground == "#d7dee9");
   REQUIRE(default_theme.line_number_foreground == "#5e6778");
-  REQUIRE(default_theme.indent_guide_foreground == "#262a34");
+  REQUIRE(default_theme.indent_guide_foreground == "#303746");
   REQUIRE(default_theme.focus_background == "#1e222a");
   REQUIRE(default_theme.mark_background == "#262e3e");
   REQUIRE(default_theme.StyleForToken(sweetshot::token_style_id::kKeyword).foreground == "#7aa2f7");

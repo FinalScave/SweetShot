@@ -151,7 +151,7 @@ namespace sweetshot {
     theme.line_number_foreground = "#5e6778";
     theme.line_number_background = "#1b1e24";
     theme.gutter_border = "#272b35";
-    theme.indent_guide_foreground = "#262a34";
+    theme.indent_guide_foreground = "#303746";
     theme.focus_background = "#1e222a";
     theme.mark_background = "#262e3e";
     theme.token_styles[token_style_id::kKeyword].bold = true;
