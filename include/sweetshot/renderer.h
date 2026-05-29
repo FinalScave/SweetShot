@@ -5,6 +5,7 @@
 #include <string>
 
 #include "sweetshot/input.h"
+#include "sweetshot/rasterizer.h"
 #include "sweetshot/scene.h"
 
 namespace sweetshot {
@@ -12,6 +13,7 @@ namespace sweetshot {
 
   struct RendererConfig {
     std::string syntax_directory;
+    std::shared_ptr<SvgRasterizer> png_rasterizer;
   };
 
   class Renderer {
@@ -21,6 +23,7 @@ namespace sweetshot {
     RenderScene renderScene(const RenderInput& input) const;
     std::string renderToSvg(const RenderInput& input) const;
     std::string renderToHtml(const RenderInput& input) const;
+    PngResult renderToPng(const RenderInput& input, const PngOptions& options = {}) const;
 
   private:
     RendererConfig config_;

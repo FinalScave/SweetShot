@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
@@ -758,5 +759,13 @@ namespace sweetshot {
 
     html << "</div></body></html>\n";
     return html.str();
+  }
+
+  PngResult Renderer::renderToPng(const RenderInput& input, const PngOptions& options) const {
+    if (config_.png_rasterizer == nullptr) {
+      throw std::runtime_error("PNG rasterizer is not configured");
+    }
+    const std::string svg = renderToSvg(input);
+    return config_.png_rasterizer->rasterize(svg, options);
   }
 }

@@ -1,9 +1,12 @@
 #include <catch2/catch_amalgamated.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "sweetshot/sweetshot.h"
 
@@ -27,6 +30,20 @@ namespace {
     }
     return count;
   }
+
+  class RecordingRasterizer final : public sweetshot::SvgRasterizer {
+  public:
+    sweetshot::PngResult rasterize(std::string_view svg, const sweetshot::PngOptions& options) override {
+      ++calls;
+      captured_svg = std::string(svg);
+      captured_options = options;
+      return {{0x89, 0x50, 0x4e, 0x47}, 24, 12};
+    }
+
+    int calls {0};
+    std::string captured_svg;
+    sweetshot::PngOptions captured_options;
+  };
 }
 
 TEST_CASE("Renderer produces highlighted scenes and outputs") {
@@ -77,6 +94,41 @@ TEST_CASE("Renderer emits SVG code lines as continuous tspans") {
   REQUIRE(countOccurrences(svg, "<text ") == 1);
   requireContains(svg, "<tspan");
   requireContains(svg, ">return</tspan>");
+}
+
+TEST_CASE("Renderer renders PNG through SVG rasterizer backend") {
+  sweetshot::RenderInput input;
+  input.source_text = "return 42;";
+  input.file_name = "main.cpp";
+  input.language_hint = "cpp";
+  input.syntax_directory = SWEETSHOT_TEST_SYNTAX_DIR;
+
+  sweetshot::PngOptions options;
+  options.scale = 2.0;
+  options.background = "#000000";
+
+  auto rasterizer = std::make_shared<RecordingRasterizer>();
+  sweetshot::RendererConfig config;
+  config.png_rasterizer = rasterizer;
+  const sweetshot::Renderer renderer(config);
+  const sweetshot::PngResult png = renderer.renderToPng(input, options);
+
+  REQUIRE(rasterizer->calls == 1);
+  requireContains(rasterizer->captured_svg, "<svg");
+  requireContains(rasterizer->captured_svg, "return");
+  REQUIRE(rasterizer->captured_options.scale == 2.0);
+  REQUIRE(rasterizer->captured_options.background == "#000000");
+  REQUIRE(png.bytes == std::vector<std::uint8_t> {0x89, 0x50, 0x4e, 0x47});
+  REQUIRE(png.width == 24);
+  REQUIRE(png.height == 12);
+}
+
+TEST_CASE("Renderer reports missing PNG rasterizer") {
+  sweetshot::RenderInput input;
+  input.source_text = "return 42;";
+
+  const sweetshot::Renderer renderer;
+  REQUIRE_THROWS_WITH(renderer.renderToPng(input), "PNG rasterizer is not configured");
 }
 
 TEST_CASE("Renderer emits indent guides") {
