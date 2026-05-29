@@ -9,8 +9,8 @@
 
 namespace sweetshot {
   enum class LongLineMode {
-    Clip,
-    Wrap
+    kClip,
+    kWrap
   };
 
   struct LineRange {
@@ -32,7 +32,7 @@ namespace sweetshot {
     std::string font_family {
       "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace"
     };
-    LongLineMode long_line_mode {LongLineMode::Clip};
+    LongLineMode long_line_mode {LongLineMode::kClip};
     std::size_t max_columns {120};
     std::vector<std::size_t> focus_lines;
     std::vector<std::size_t> mark_lines;
@@ -45,7 +45,7 @@ namespace sweetshot {
     std::string language_hint;
     std::string syntax_directory;
     RenderOptions options;
-    Theme theme {builtinTheme("default")};
+    Theme theme {BuiltinTheme("default")};
   };
 }
 

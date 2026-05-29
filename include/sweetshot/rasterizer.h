@@ -22,7 +22,7 @@ namespace sweetshot {
   public:
     virtual ~SvgRasterizer() = default;
 
-    virtual PngResult rasterize(std::string_view svg, const PngOptions& options) = 0;
+    virtual PngResult Rasterize(std::string_view svg, const PngOptions& options) = 0;
   };
 }
 

@@ -20,10 +20,10 @@ namespace sweetshot {
   public:
     explicit Renderer(RendererConfig config = {});
 
-    RenderScene renderScene(const RenderInput& input) const;
-    std::string renderToSvg(const RenderInput& input) const;
-    std::string renderToHtml(const RenderInput& input) const;
-    PngResult renderToPng(const RenderInput& input, const PngOptions& options = {}) const;
+    RenderScene RenderToScene(const RenderInput& input) const;
+    std::string RenderToSvg(const RenderInput& input) const;
+    std::string RenderToHtml(const RenderInput& input) const;
+    PngResult RenderToPng(const RenderInput& input, const PngOptions& options = {}) const;
 
   private:
     RendererConfig config_;

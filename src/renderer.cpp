@@ -30,6 +30,8 @@ namespace sweetshot {
   };
 
   namespace {
+    constexpr const char* kDefaultSyntaxDirectory = SWEETSHOT_DEFAULT_SYNTAX_DIR;
+
     struct HighlightSegment {
       std::size_t start_column {0};
       std::size_t end_column {0};
@@ -53,31 +55,31 @@ namespace sweetshot {
       std::vector<SourceIndentGuide> indent_guides;
     };
 
-    std::string effectiveSyntaxDirectory(const RenderInput& input, const RendererConfig& config) {
+    std::string EffectiveSyntaxDirectory(const RenderInput& input, const RendererConfig& config) {
       if (!input.syntax_directory.empty()) {
         return input.syntax_directory;
       }
       if (!config.syntax_directory.empty()) {
         return config.syntax_directory;
       }
-      return SWEETSHOT_DEFAULT_SYNTAX_DIR;
+      return kDefaultSyntaxDirectory;
     }
 
-    bool isInlineStyleSyntaxFile(const std::filesystem::path& path) {
+    bool IsInlineStyleSyntaxFile(const std::filesystem::path& path) {
       const std::string filename = path.filename().string();
       const std::string suffix = "-inlineStyle.json";
       return filename.size() >= suffix.size()
         && filename.compare(filename.size() - suffix.size(), suffix.size(), suffix) == 0;
     }
 
-    std::vector<std::string> listSyntaxFiles(const std::string& syntax_directory) {
+    std::vector<std::string> ListSyntaxFiles(const std::string& syntax_directory) {
       std::vector<std::string> result;
       if (syntax_directory.empty() || !std::filesystem::is_directory(syntax_directory)) {
         return result;
       }
       for (const auto& entry : std::filesystem::directory_iterator(syntax_directory)) {
         if (entry.is_regular_file() && entry.path().extension() == ".json"
-            && !isInlineStyleSyntaxFile(entry.path())) {
+            && !IsInlineStyleSyntaxFile(entry.path())) {
           result.push_back(entry.path().string());
         }
       }
@@ -85,50 +87,50 @@ namespace sweetshot {
       return result;
     }
 
-    std::string syntaxCacheKey(const std::string& syntax_directory, std::size_t tab_size) {
+    std::string SyntaxCacheKey(const std::string& syntax_directory, std::size_t tab_size) {
       return syntax_directory + "\n" + std::to_string(std::max<std::size_t>(tab_size, 1));
     }
 
-    void registerTokenStyles(const sweetline::SharedPtr<sweetline::HighlightEngine>& engine) {
-      engine->registerStyleName("default", token_style_id::Default);
-      engine->registerStyleName("keyword", token_style_id::Keyword);
-      engine->registerStyleName("string", token_style_id::String);
-      engine->registerStyleName("number", token_style_id::Number);
-      engine->registerStyleName("comment", token_style_id::Comment);
-      engine->registerStyleName("class", token_style_id::Class);
-      engine->registerStyleName("method", token_style_id::Method);
-      engine->registerStyleName("variable", token_style_id::Variable);
-      engine->registerStyleName("punctuation", token_style_id::Punctuation);
-      engine->registerStyleName("annotation", token_style_id::Annotation);
-      engine->registerStyleName("preprocessor", token_style_id::Preprocessor);
-      engine->registerStyleName("macro", token_style_id::Macro);
-      engine->registerStyleName("lifetime", token_style_id::Lifetime);
-      engine->registerStyleName("selector", token_style_id::Selector);
-      engine->registerStyleName("builtin", token_style_id::Builtin);
-      engine->registerStyleName("url", token_style_id::Url);
-      engine->registerStyleName("property", token_style_id::Property);
+    void RegisterTokenStyles(const sweetline::SharedPtr<sweetline::HighlightEngine>& engine) {
+      engine->registerStyleName("default", token_style_id::kDefault);
+      engine->registerStyleName("keyword", token_style_id::kKeyword);
+      engine->registerStyleName("string", token_style_id::kString);
+      engine->registerStyleName("number", token_style_id::kNumber);
+      engine->registerStyleName("comment", token_style_id::kComment);
+      engine->registerStyleName("class", token_style_id::kClass);
+      engine->registerStyleName("method", token_style_id::kMethod);
+      engine->registerStyleName("variable", token_style_id::kVariable);
+      engine->registerStyleName("punctuation", token_style_id::kPunctuation);
+      engine->registerStyleName("annotation", token_style_id::kAnnotation);
+      engine->registerStyleName("preprocessor", token_style_id::kPreprocessor);
+      engine->registerStyleName("macro", token_style_id::kMacro);
+      engine->registerStyleName("lifetime", token_style_id::kLifetime);
+      engine->registerStyleName("selector", token_style_id::kSelector);
+      engine->registerStyleName("builtin", token_style_id::kBuiltin);
+      engine->registerStyleName("url", token_style_id::kUrl);
+      engine->registerStyleName("property", token_style_id::kProperty);
     }
 
-    RendererState::CachedEngine& cachedEngine(RendererState& state, const RenderInput& input,
-                                              const RendererConfig& config) {
-      const std::string syntax_directory = effectiveSyntaxDirectory(input, config);
-      const std::string key = syntaxCacheKey(syntax_directory, input.options.tab_size);
+    RendererState::CachedEngine& GetCachedEngine(RendererState& state, const RenderInput& input,
+                                                 const RendererConfig& config) {
+      const std::string syntax_directory = EffectiveSyntaxDirectory(input, config);
+      const std::string key = SyntaxCacheKey(syntax_directory, input.options.tab_size);
       RendererState::CachedEngine& cached = state.engines[key];
       if (cached.engine == nullptr) {
         sweetline::HighlightConfig highlight_config = sweetline::HighlightConfig::kDefault;
         highlight_config.tab_size = static_cast<int32_t>(std::max<std::size_t>(input.options.tab_size, 1));
         cached.engine = sweetline::makeSharedPtr<sweetline::HighlightEngine>(highlight_config);
-        registerTokenStyles(cached.engine);
+        RegisterTokenStyles(cached.engine);
       }
       return cached;
     }
 
-    void compileSyntaxDirectory(RendererState::CachedEngine& cached, const std::string& syntax_directory) {
+    void CompileSyntaxDirectory(RendererState::CachedEngine& cached, const std::string& syntax_directory) {
       if (cached.directory_compiled) {
         return;
       }
 
-      std::vector<std::string> pending = listSyntaxFiles(syntax_directory);
+      std::vector<std::string> pending = ListSyntaxFiles(syntax_directory);
 
       while (!pending.empty()) {
         std::vector<std::string> next;
@@ -156,7 +158,7 @@ namespace sweetshot {
       std::string language;
     };
 
-    AnalyzerSelection createAnalyzerForInput(RendererState::CachedEngine& cached, const RenderInput& input) {
+    AnalyzerSelection CreateAnalyzerForInput(RendererState::CachedEngine& cached, const RenderInput& input) {
       const sweetline::SharedPtr<sweetline::HighlightEngine>& engine = cached.engine;
       sweetline::SharedPtr<sweetline::SyntaxRule> rule;
       if (!input.language_hint.empty()) {
@@ -179,7 +181,7 @@ namespace sweetshot {
       return selection;
     }
 
-    std::string expandTabs(const std::string& text, std::size_t tab_size) {
+    std::string ExpandTabs(const std::string& text, std::size_t tab_size) {
       const std::size_t safe_tab_size = std::max<std::size_t>(tab_size, 1);
       std::string result;
       result.reserve(text.size());
@@ -202,7 +204,7 @@ namespace sweetshot {
       return result;
     }
 
-    std::vector<std::string> splitLines(const std::string& text) {
+    std::vector<std::string> SplitLines(const std::string& text) {
       std::vector<std::string> result;
       std::string current;
 
@@ -226,24 +228,24 @@ namespace sweetshot {
       return result;
     }
 
-    std::size_t charCount(const std::string& text) {
+    std::size_t CharCount(const std::string& text) {
       return sweetline::Utf8Util::countChars(text);
     }
 
-    std::string utf8Substr(const std::string& text, std::size_t start, std::size_t count) {
+    std::string Utf8Substr(const std::string& text, std::size_t start, std::size_t count) {
       return sweetline::Utf8Util::utf8Substr(text, start, count);
     }
 
-    AnalysisResult analyzeInput(const RenderInput& input, const RendererConfig& config, RendererState& state,
+    AnalysisResult AnalyzeInput(const RenderInput& input, const RendererConfig& config, RendererState& state,
                                 const std::vector<std::string>& source_lines) {
       AnalysisResult result;
       result.lines.resize(source_lines.size());
 
-      const std::string syntax_directory = effectiveSyntaxDirectory(input, config);
+      const std::string syntax_directory = EffectiveSyntaxDirectory(input, config);
       std::lock_guard<std::mutex> lock(state.mutex);
-      RendererState::CachedEngine& cached = cachedEngine(state, input, config);
-      compileSyntaxDirectory(cached, syntax_directory);
-      AnalyzerSelection selection = createAnalyzerForInput(cached, input);
+      RendererState::CachedEngine& cached = GetCachedEngine(state, input, config);
+      CompileSyntaxDirectory(cached, syntax_directory);
+      AnalyzerSelection selection = CreateAnalyzerForInput(cached, input);
       if (selection.analyzer == nullptr) {
         return result;
       }
@@ -263,7 +265,7 @@ namespace sweetshot {
           HighlightSegment segment;
           segment.start_column = span.range.start.column;
           segment.end_column = span.range.end.column;
-          segment.text = utf8Substr(source_lines[line_index], segment.start_column,
+          segment.text = Utf8Substr(source_lines[line_index], segment.start_column,
                                     segment.end_column - segment.start_column);
           segment.style_id = span.style_id;
           result.lines[line_index].push_back(std::move(segment));
@@ -293,10 +295,10 @@ namespace sweetshot {
       return result;
     }
 
-    std::vector<HighlightSegment> buildRunsForLine(const std::string& line,
+    std::vector<HighlightSegment> BuildRunsForLine(const std::string& line,
                                                    const std::vector<HighlightSegment>& highlighted) {
       std::vector<HighlightSegment> result;
-      const std::size_t total_columns = charCount(line);
+      const std::size_t total_columns = CharCount(line);
       std::size_t cursor = 0;
 
       for (const HighlightSegment& segment : highlighted) {
@@ -304,7 +306,7 @@ namespace sweetshot {
           HighlightSegment plain;
           plain.start_column = cursor;
           plain.end_column = segment.start_column;
-          plain.text = utf8Substr(line, cursor, segment.start_column - cursor);
+          plain.text = Utf8Substr(line, cursor, segment.start_column - cursor);
           result.push_back(std::move(plain));
         }
         if (!segment.text.empty()) {
@@ -317,7 +319,7 @@ namespace sweetshot {
         HighlightSegment plain;
         plain.start_column = cursor;
         plain.end_column = total_columns;
-        plain.text = utf8Substr(line, cursor, total_columns - cursor);
+        plain.text = Utf8Substr(line, cursor, total_columns - cursor);
         result.push_back(std::move(plain));
       }
 
@@ -328,7 +330,7 @@ namespace sweetshot {
       return result;
     }
 
-    double estimateCharWidth(const RenderOptions& options) {
+    double EstimateCharWidth(const RenderOptions& options) {
       return std::max(1.0, std::round(options.font_size * 0.62 * 100.0) / 100.0);
     }
 
@@ -344,11 +346,11 @@ namespace sweetshot {
       std::size_t column_limit {0};
     };
 
-    double textOriginX(const RenderOptions& options) {
+    double TextOriginX(const RenderOptions& options) {
       return options.padding_x + (options.show_line_numbers ? options.gutter_width : 0.0);
     }
 
-    std::size_t maxColumnsForWidth(const RenderOptions& options, double text_origin_x, double char_width) {
+    std::size_t MaxColumnsForWidth(const RenderOptions& options, double text_origin_x, double char_width) {
       const double available_width = options.max_width - text_origin_x - options.padding_x;
       if (available_width <= 0.0) {
         return 0;
@@ -356,34 +358,34 @@ namespace sweetshot {
       return static_cast<std::size_t>(std::floor(available_width / char_width));
     }
 
-    std::size_t constrainedColumnLimit(const RenderOptions& options, double text_origin_x, double char_width) {
+    std::size_t ConstrainedColumnLimit(const RenderOptions& options, double text_origin_x, double char_width) {
       std::size_t limit = options.max_columns;
-      const std::size_t width_columns = maxColumnsForWidth(options, text_origin_x, char_width);
+      const std::size_t width_columns = MaxColumnsForWidth(options, text_origin_x, char_width);
       if (width_columns > 0) {
         limit = limit > 0 ? std::min(limit, width_columns) : width_columns;
       }
       return limit;
     }
 
-    LayoutMetrics makeLayoutMetrics(const RenderOptions& options) {
+    LayoutMetrics MakeLayoutMetrics(const RenderOptions& options) {
       LayoutMetrics metrics;
-      metrics.char_width = estimateCharWidth(options);
-      metrics.text_origin_x = textOriginX(options);
-      metrics.column_limit = constrainedColumnLimit(options, metrics.text_origin_x, metrics.char_width);
+      metrics.char_width = EstimateCharWidth(options);
+      metrics.text_origin_x = TextOriginX(options);
+      metrics.column_limit = ConstrainedColumnLimit(options, metrics.text_origin_x, metrics.char_width);
       return metrics;
     }
 
-    double visualColumnX(const LayoutMetrics& metrics, const VisualRange& range, std::size_t column) {
+    double VisualColumnX(const LayoutMetrics& metrics, const VisualRange& range, std::size_t column) {
       return metrics.text_origin_x + static_cast<double>(column - range.start_column) * metrics.char_width;
     }
 
-    double renderWidth(const RenderOptions& options, const LayoutMetrics& metrics, std::size_t max_visual_columns) {
+    double RenderWidth(const RenderOptions& options, const LayoutMetrics& metrics, std::size_t max_visual_columns) {
       return std::min(options.max_width,
                       metrics.text_origin_x + options.padding_x
                       + static_cast<double>(max_visual_columns) * metrics.char_width);
     }
 
-    std::vector<VisualRange> visualRangesForLine(std::size_t total_columns, const RenderOptions& options,
+    std::vector<VisualRange> VisualRangesForLine(std::size_t total_columns, const RenderOptions& options,
                                                  std::size_t column_limit) {
       std::vector<VisualRange> ranges;
       if (total_columns == 0) {
@@ -391,7 +393,7 @@ namespace sweetshot {
         return ranges;
       }
 
-      if (options.long_line_mode == LongLineMode::Wrap && column_limit > 0) {
+      if (options.long_line_mode == LongLineMode::kWrap && column_limit > 0) {
         for (std::size_t start = 0; start < total_columns; start += column_limit) {
           ranges.push_back({start, std::min(start + column_limit, total_columns), start == 0});
         }
@@ -399,14 +401,14 @@ namespace sweetshot {
       }
 
       const std::size_t end_column =
-        options.long_line_mode == LongLineMode::Clip && column_limit > 0
+        options.long_line_mode == LongLineMode::kClip && column_limit > 0
           ? std::min(total_columns, column_limit)
           : total_columns;
       ranges.push_back({0, end_column, true});
       return ranges;
     }
 
-    bool guideColumnVisible(std::size_t column, const VisualRange& range, std::size_t column_limit) {
+    bool GuideColumnVisible(std::size_t column, const VisualRange& range, std::size_t column_limit) {
       if (range.start_column == range.end_column) {
         return column >= range.start_column
           && (column_limit == 0 || column <= range.start_column + column_limit);
@@ -414,7 +416,7 @@ namespace sweetshot {
       return column >= range.start_column && column <= range.end_column;
     }
 
-    bool guideLineVisible(const SourceIndentGuide& segment, std::size_t source_line) {
+    bool GuideLineVisible(const SourceIndentGuide& segment, std::size_t source_line) {
       if (source_line < segment.start_line || source_line > segment.end_line) {
         return false;
       }
@@ -430,7 +432,7 @@ namespace sweetshot {
       return true;
     }
 
-    std::vector<SceneIndentGuide> indentGuidesForRange(const std::vector<SourceIndentGuide>& guides,
+    std::vector<SceneIndentGuide> IndentGuidesForRange(const std::vector<SourceIndentGuide>& guides,
                                                        std::size_t source_line,
                                                        const VisualRange& range,
                                                        const LayoutMetrics& metrics) {
@@ -439,15 +441,15 @@ namespace sweetshot {
         if (source_line < segment.start_line || source_line > segment.end_line) {
           continue;
         }
-        if (!guideLineVisible(segment, source_line)) {
+        if (!GuideLineVisible(segment, source_line)) {
           continue;
         }
-        if (!guideColumnVisible(segment.column, range, metrics.column_limit)) {
+        if (!GuideColumnVisible(segment.column, range, metrics.column_limit)) {
           continue;
         }
         SceneIndentGuide guide;
         guide.column = segment.column;
-        guide.x = visualColumnX(metrics, range, segment.column);
+        guide.x = VisualColumnX(metrics, range, segment.column);
         guide.nesting_level = segment.nesting_level;
         guide.continues_before = segment.continues_before;
         guide.continues_after = segment.continues_after;
@@ -456,11 +458,11 @@ namespace sweetshot {
       return result;
     }
 
-    double codeRelativeX(const RenderScene& scene, double absolute_x) {
+    double CodeRelativeX(const RenderScene& scene, double absolute_x) {
       return scene.options.padding_x + absolute_x - scene.text_origin_x;
     }
 
-    std::vector<HighlightSegment> sliceSegmentsForRange(const std::string& line,
+    std::vector<HighlightSegment> SliceSegmentsForRange(const std::string& line,
                                                         const std::vector<HighlightSegment>& segments,
                                                         std::size_t start_column,
                                                         std::size_t end_column) {
@@ -475,7 +477,7 @@ namespace sweetshot {
         HighlightSegment sliced;
         sliced.start_column = start;
         sliced.end_column = end;
-        sliced.text = utf8Substr(line, start, end - start);
+        sliced.text = Utf8Substr(line, start, end - start);
         sliced.style_id = segment.style_id;
         result.push_back(std::move(sliced));
       }
@@ -489,11 +491,11 @@ namespace sweetshot {
       return result;
     }
 
-    std::unordered_set<std::size_t> toSet(const std::vector<std::size_t>& values) {
+    std::unordered_set<std::size_t> ToSet(const std::vector<std::size_t>& values) {
       return std::unordered_set<std::size_t>(values.begin(), values.end());
     }
 
-    std::string escapeXml(const std::string& value) {
+    std::string EscapeXml(const std::string& value) {
       std::string result;
       result.reserve(value.size());
       for (char ch : value) {
@@ -521,7 +523,7 @@ namespace sweetshot {
       return result;
     }
 
-    std::string cssTextStyle(const TextStyle& style) {
+    std::string CssTextStyle(const TextStyle& style) {
       std::ostringstream css;
       if (!style.foreground.empty()) {
         css << "color:" << style.foreground << ";";
@@ -541,10 +543,10 @@ namespace sweetshot {
       return css.str();
     }
 
-    std::string svgFontStyle(const TextStyle& style) {
+    std::string SvgFontStyle(const TextStyle& style) {
       std::ostringstream attributes;
       if (!style.foreground.empty()) {
-        attributes << " fill=\"" << escapeXml(style.foreground) << "\"";
+        attributes << " fill=\"" << EscapeXml(style.foreground) << "\"";
       }
       if (style.bold) {
         attributes << " font-weight=\"700\"";
@@ -563,11 +565,11 @@ namespace sweetshot {
     : config_(std::move(config)), state_(std::make_shared<RendererState>()) {
   }
 
-  RenderScene Renderer::renderScene(const RenderInput& input) const {
+  RenderScene Renderer::RenderToScene(const RenderInput& input) const {
     RenderInput normalized_input = input;
-    normalized_input.source_text = expandTabs(input.source_text, input.options.tab_size);
-    std::vector<std::string> source_lines = splitLines(normalized_input.source_text);
-    AnalysisResult analysis = analyzeInput(normalized_input, config_, *state_, source_lines);
+    normalized_input.source_text = ExpandTabs(input.source_text, input.options.tab_size);
+    std::vector<std::string> source_lines = SplitLines(normalized_input.source_text);
+    AnalysisResult analysis = AnalyzeInput(normalized_input, config_, *state_, source_lines);
 
     const std::size_t total_lines = source_lines.size();
     std::size_t start_line = 0;
@@ -577,15 +579,15 @@ namespace sweetshot {
       end_line = std::min(total_lines, start_line + input.options.line_range.line_count);
     }
 
-    const std::unordered_set<std::size_t> focus_lines = toSet(input.options.focus_lines);
-    const std::unordered_set<std::size_t> mark_lines = toSet(input.options.mark_lines);
+    const std::unordered_set<std::size_t> focus_lines = ToSet(input.options.focus_lines);
+    const std::unordered_set<std::size_t> mark_lines = ToSet(input.options.mark_lines);
 
     RenderScene scene;
     scene.theme = input.theme;
     scene.options = input.options;
     scene.language = analysis.language;
     scene.file_name = input.file_name;
-    const LayoutMetrics metrics = makeLayoutMetrics(input.options);
+    const LayoutMetrics metrics = MakeLayoutMetrics(input.options);
     scene.char_width = metrics.char_width;
     scene.text_origin_x = metrics.text_origin_x;
 
@@ -594,83 +596,83 @@ namespace sweetshot {
     for (std::size_t line_index = start_line; line_index < end_line; ++line_index) {
       const std::vector<HighlightSegment> highlighted =
         line_index < analysis.lines.size() ? analysis.lines[line_index] : std::vector<HighlightSegment> {};
-      std::vector<HighlightSegment> segments = buildRunsForLine(source_lines[line_index], highlighted);
-      const std::size_t total_columns = charCount(source_lines[line_index]);
-      for (const VisualRange& range : visualRangesForLine(total_columns, input.options, metrics.column_limit)) {
+      std::vector<HighlightSegment> segments = BuildRunsForLine(source_lines[line_index], highlighted);
+      const std::size_t total_columns = CharCount(source_lines[line_index]);
+      for (const VisualRange& range : VisualRangesForLine(total_columns, input.options, metrics.column_limit)) {
         SceneLine scene_line;
         scene_line.source_line = line_index;
-        scene_line.text = utf8Substr(source_lines[line_index], range.start_column,
+        scene_line.text = Utf8Substr(source_lines[line_index], range.start_column,
                                      range.end_column - range.start_column);
         scene_line.y = input.options.padding_y
           + static_cast<double>(scene.lines.size()) * input.options.line_height;
         scene_line.focused = focus_lines.find(line_index) != focus_lines.end();
         scene_line.marked = mark_lines.find(line_index) != mark_lines.end();
         scene_line.line_number_visible = range.line_number_visible;
-        max_visual_columns = std::max(max_visual_columns, charCount(scene_line.text));
+        max_visual_columns = std::max(max_visual_columns, CharCount(scene_line.text));
         if (input.options.show_indent_guides) {
-          scene_line.indent_guides = indentGuidesForRange(analysis.indent_guides, line_index, range, metrics);
+          scene_line.indent_guides = IndentGuidesForRange(analysis.indent_guides, line_index, range, metrics);
           for (const SceneIndentGuide& guide : scene_line.indent_guides) {
             max_visual_columns = std::max(max_visual_columns, guide.column - range.start_column + 1);
           }
         }
 
         for (const HighlightSegment& segment :
-             sliceSegmentsForRange(source_lines[line_index], segments, range.start_column, range.end_column)) {
+             SliceSegmentsForRange(source_lines[line_index], segments, range.start_column, range.end_column)) {
           TextRun run;
           run.column = segment.start_column;
-          run.x = visualColumnX(metrics, range, segment.start_column);
+          run.x = VisualColumnX(metrics, range, segment.start_column);
           run.y = scene_line.y + input.options.font_size;
           run.text = segment.text;
           run.style_id = segment.style_id;
-          run.style = input.theme.styleForToken(segment.style_id);
+          run.style = input.theme.StyleForToken(segment.style_id);
           scene_line.runs.push_back(std::move(run));
         }
         scene.lines.push_back(std::move(scene_line));
       }
     }
 
-    scene.width = renderWidth(input.options, metrics, max_visual_columns);
+    scene.width = RenderWidth(input.options, metrics, max_visual_columns);
     scene.height = input.options.padding_y * 2.0
       + static_cast<double>(scene.lines.size()) * input.options.line_height;
 
     return scene;
   }
 
-  std::string Renderer::renderToSvg(const RenderInput& input) const {
-    const RenderScene scene = renderScene(input);
+  std::string Renderer::RenderToSvg(const RenderInput& input) const {
+    const RenderScene scene = RenderToScene(input);
     std::ostringstream svg;
 
     svg << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" << scene.width
         << "\" height=\"" << scene.height << "\" viewBox=\"0 0 " << scene.width
         << " " << scene.height << "\">\n";
-    svg << "<rect width=\"100%\" height=\"100%\" fill=\"" << escapeXml(scene.theme.background) << "\"/>\n";
+    svg << "<rect width=\"100%\" height=\"100%\" fill=\"" << EscapeXml(scene.theme.background) << "\"/>\n";
 
     if (scene.options.show_line_numbers) {
       svg << "<rect x=\"0\" y=\"0\" width=\"" << scene.options.gutter_width + scene.options.padding_x
           << "\" height=\"" << scene.height << "\" fill=\""
-          << escapeXml(scene.theme.line_number_background) << "\"/>\n";
+          << EscapeXml(scene.theme.line_number_background) << "\"/>\n";
       svg << "<line x1=\"" << scene.text_origin_x - scene.options.padding_x * 0.5
           << "\" y1=\"0\" x2=\"" << scene.text_origin_x - scene.options.padding_x * 0.5
-          << "\" y2=\"" << scene.height << "\" stroke=\"" << escapeXml(scene.theme.gutter_border) << "\"/>\n";
+          << "\" y2=\"" << scene.height << "\" stroke=\"" << EscapeXml(scene.theme.gutter_border) << "\"/>\n";
     }
 
-    svg << "<g font-family=\"" << escapeXml(scene.options.font_family) << "\" font-size=\""
+    svg << "<g font-family=\"" << EscapeXml(scene.options.font_family) << "\" font-size=\""
         << scene.options.font_size << "\" xml:space=\"preserve\">\n";
     for (const SceneLine& line : scene.lines) {
       if (line.marked) {
         svg << "<rect x=\"0\" y=\"" << line.y << "\" width=\"" << scene.width
             << "\" height=\"" << scene.options.line_height << "\" fill=\""
-            << escapeXml(scene.theme.mark_background) << "\"/>\n";
+            << EscapeXml(scene.theme.mark_background) << "\"/>\n";
       } else if (line.focused) {
         svg << "<rect x=\"0\" y=\"" << line.y << "\" width=\"" << scene.width
             << "\" height=\"" << scene.options.line_height << "\" fill=\""
-            << escapeXml(scene.theme.focus_background) << "\"/>\n";
+            << EscapeXml(scene.theme.focus_background) << "\"/>\n";
       }
 
       if (scene.options.show_line_numbers && line.line_number_visible) {
         svg << "<text x=\"" << scene.text_origin_x - scene.options.padding_x
             << "\" y=\"" << line.y + scene.options.font_size << "\" text-anchor=\"end\" fill=\""
-            << escapeXml(scene.theme.line_number_foreground) << "\">"
+            << EscapeXml(scene.theme.line_number_foreground) << "\">"
             << (line.source_line + 1) << "</text>\n";
       }
 
@@ -679,7 +681,7 @@ namespace sweetshot {
           svg << "<line class=\"sweetshot-indent-guide\" x1=\"" << guide.x
               << "\" y1=\"" << line.y << "\" x2=\"" << guide.x
               << "\" y2=\"" << line.y + scene.options.line_height << "\" stroke=\""
-              << escapeXml(scene.theme.indent_guide_foreground) << "\" stroke-width=\"1\"/>\n";
+              << EscapeXml(scene.theme.indent_guide_foreground) << "\" stroke-width=\"1\"/>\n";
         }
       }
 
@@ -693,7 +695,7 @@ namespace sweetshot {
           if (run.text.empty()) {
             continue;
           }
-          svg << "<tspan" << svgFontStyle(run.style) << ">" << escapeXml(run.text) << "</tspan>";
+          svg << "<tspan" << SvgFontStyle(run.style) << ">" << EscapeXml(run.text) << "</tspan>";
         }
         svg << "</text>\n";
       }
@@ -702,8 +704,8 @@ namespace sweetshot {
     return svg.str();
   }
 
-  std::string Renderer::renderToHtml(const RenderInput& input) const {
-    const RenderScene scene = renderScene(input);
+  std::string Renderer::RenderToHtml(const RenderInput& input) const {
+    const RenderScene scene = RenderToScene(input);
     std::ostringstream html;
 
     html << "<!doctype html>\n<html><head><meta charset=\"utf-8\"><style>\n";
@@ -742,7 +744,7 @@ namespace sweetshot {
       html << "<span class=\"sweetshot-code\">";
       if (scene.options.show_indent_guides) {
         for (const SceneIndentGuide& guide : line.indent_guides) {
-          const double left = codeRelativeX(scene, guide.x);
+          const double left = CodeRelativeX(scene, guide.x);
           html << "<span class=\"sweetshot-indent-guide\" style=\"left:"
                << left << "px\"></span>";
         }
@@ -751,8 +753,8 @@ namespace sweetshot {
         if (run.text.empty()) {
           continue;
         }
-        html << "<span style=\"" << cssTextStyle(run.style) << "\">"
-             << escapeXml(run.text) << "</span>";
+        html << "<span style=\"" << CssTextStyle(run.style) << "\">"
+             << EscapeXml(run.text) << "</span>";
       }
       html << "</span></div>";
     }
@@ -761,11 +763,11 @@ namespace sweetshot {
     return html.str();
   }
 
-  PngResult Renderer::renderToPng(const RenderInput& input, const PngOptions& options) const {
+  PngResult Renderer::RenderToPng(const RenderInput& input, const PngOptions& options) const {
     if (config_.png_rasterizer == nullptr) {
       throw std::runtime_error("PNG rasterizer is not configured");
     }
-    const std::string svg = renderToSvg(input);
-    return config_.png_rasterizer->rasterize(svg, options);
+    const std::string svg = RenderToSvg(input);
+    return config_.png_rasterizer->Rasterize(svg, options);
   }
 }

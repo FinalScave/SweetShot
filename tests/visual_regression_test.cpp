@@ -23,17 +23,17 @@ namespace {
     std::filesystem::path path;
   };
 
-  void requireContains(const std::string& value, const std::string& expected) {
+  void RequireContains(const std::string& value, const std::string& expected) {
     INFO("Expected output to contain: " << expected);
     REQUIRE(value.find(expected) != std::string::npos);
   }
 
-  void requireNotContains(const std::string& value, const std::string& unexpected) {
+  void RequireNotContains(const std::string& value, const std::string& unexpected) {
     INFO("Expected output to omit: " << unexpected);
     REQUIRE(value.find(unexpected) == std::string::npos);
   }
 
-  std::size_t countOccurrences(const std::string& value, const std::string& needle) {
+  std::size_t CountOccurrences(const std::string& value, const std::string& needle) {
     std::size_t count = 0;
     std::size_t offset = 0;
     while ((offset = value.find(needle, offset)) != std::string::npos) {
@@ -43,7 +43,7 @@ namespace {
     return count;
   }
 
-  void writeVisualSyntax(const std::filesystem::path& syntax_directory) {
+  void WriteVisualSyntax(const std::filesystem::path& syntax_directory) {
     std::ofstream syntax_file(syntax_directory / "visual.json");
     syntax_file << R"json({
   "name": "visual",
@@ -80,11 +80,11 @@ namespace {
 })json";
   }
 
-  std::string boolText(bool value) {
+  std::string BoolText(bool value) {
     return value ? "yes" : "no";
   }
 
-  std::string guideSnapshot(const std::vector<sweetshot::SceneIndentGuide>& guides) {
+  std::string GuideSnapshot(const std::vector<sweetshot::SceneIndentGuide>& guides) {
     if (guides.empty()) {
       return "none";
     }
@@ -99,18 +99,18 @@ namespace {
     return output.str();
   }
 
-  std::string sceneLayoutSnapshot(const sweetshot::RenderScene& scene) {
+  std::string SceneLayoutSnapshot(const sweetshot::RenderScene& scene) {
     std::ostringstream output;
     output << "width=" << scene.width << " height=" << scene.height
            << " text_origin_x=" << scene.text_origin_x << " char_width=" << scene.char_width << "\n";
     for (std::size_t index = 0; index < scene.lines.size(); ++index) {
       const sweetshot::SceneLine& line = scene.lines[index];
       output << "line " << index << " source=" << line.source_line << " y=" << line.y
-             << " line_number=" << boolText(line.line_number_visible)
-             << " focus=" << boolText(line.focused)
-             << " mark=" << boolText(line.marked)
+             << " line_number=" << BoolText(line.line_number_visible)
+             << " focus=" << BoolText(line.focused)
+             << " mark=" << BoolText(line.marked)
              << " text=\"" << line.text << "\""
-             << " guides=" << guideSnapshot(line.indent_guides) << "\n";
+             << " guides=" << GuideSnapshot(line.indent_guides) << "\n";
     }
     return output.str();
   }
@@ -118,7 +118,7 @@ namespace {
 
 TEST_CASE("Visual fixture keeps scoped code layout stable") {
   TempSyntaxDirectory syntax_directory("sweetshot-visual-regression-syntax-test");
-  writeVisualSyntax(syntax_directory.path);
+  WriteVisualSyntax(syntax_directory.path);
 
   sweetshot::RenderInput input;
   input.source_text = "func Example() {\n    if (ready) {\n        return \"ok\";\n    }\n}";
@@ -129,8 +129,8 @@ TEST_CASE("Visual fixture keeps scoped code layout stable") {
   input.options.mark_lines = {1};
 
   sweetshot::Renderer renderer;
-  const sweetshot::RenderScene scene = renderer.renderScene(input);
-  const std::string snapshot = sceneLayoutSnapshot(scene);
+  const sweetshot::RenderScene scene = renderer.RenderToScene(input);
+  const std::string snapshot = SceneLayoutSnapshot(scene);
   INFO(snapshot);
   REQUIRE(snapshot == R"snapshot(width=269.6 height=150 text_origin_x=72 char_width=8.68
 line 0 source=0 y=20 line_number=yes focus=no mark=no text="func Example() {" guides=none
@@ -140,24 +140,24 @@ line 3 source=3 y=86 line_number=yes focus=no mark=no text="    }" guides=0@72
 line 4 source=4 y=108 line_number=yes focus=no mark=no text="}" guides=none
 )snapshot");
 
-  const std::string svg = renderer.renderToSvg(input);
-  REQUIRE(countOccurrences(svg, "class=\"sweetshot-indent-guide\"") == 4);
-  requireContains(svg, "<rect x=\"0\" y=\"0\" width=\"72\" height=\"150\"");
-  requireContains(svg, "<line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"150\"");
-  requireContains(svg, "<text x=\"48\" y=\"34\" text-anchor=\"end\"");
-  requireContains(svg, "<rect x=\"0\" y=\"42\" width=\"269.6\" height=\"22\" fill=");
-  requireContains(svg, "<rect x=\"0\" y=\"64\" width=\"269.6\" height=\"22\" fill=");
-  requireContains(svg, "<line class=\"sweetshot-indent-guide\" x1=\"72\" y1=\"42\" x2=\"72\" y2=\"64\"");
-  requireContains(svg, "<line class=\"sweetshot-indent-guide\" x1=\"106.72\" y1=\"64\" x2=\"106.72\" y2=\"86\"");
-  requireNotContains(svg, "<tspan x=");
+  const std::string svg = renderer.RenderToSvg(input);
+  REQUIRE(CountOccurrences(svg, "class=\"sweetshot-indent-guide\"") == 4);
+  RequireContains(svg, "<rect x=\"0\" y=\"0\" width=\"72\" height=\"150\"");
+  RequireContains(svg, "<line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"150\"");
+  RequireContains(svg, "<text x=\"48\" y=\"34\" text-anchor=\"end\"");
+  RequireContains(svg, "<rect x=\"0\" y=\"42\" width=\"269.6\" height=\"22\" fill=");
+  RequireContains(svg, "<rect x=\"0\" y=\"64\" width=\"269.6\" height=\"22\" fill=");
+  RequireContains(svg, "<line class=\"sweetshot-indent-guide\" x1=\"72\" y1=\"42\" x2=\"72\" y2=\"64\"");
+  RequireContains(svg, "<line class=\"sweetshot-indent-guide\" x1=\"106.72\" y1=\"64\" x2=\"106.72\" y2=\"86\"");
+  RequireNotContains(svg, "<tspan x=");
 
-  const std::string html = renderer.renderToHtml(input);
-  REQUIRE(countOccurrences(html, "class=\"sweetshot-indent-guide\"") == 4);
-  requireContains(html, ".sweetshot-gutter{box-sizing:border-box;width:72px;padding:0 24px 0 0;");
-  requireContains(html, "sweetshot-line mark");
-  requireContains(html, "sweetshot-line focus");
-  requireContains(html, "left:24px");
-  requireContains(html, "left:58.72px");
+  const std::string html = renderer.RenderToHtml(input);
+  REQUIRE(CountOccurrences(html, "class=\"sweetshot-indent-guide\"") == 4);
+  RequireContains(html, ".sweetshot-gutter{box-sizing:border-box;width:72px;padding:0 24px 0 0;");
+  RequireContains(html, "sweetshot-line mark");
+  RequireContains(html, "sweetshot-line focus");
+  RequireContains(html, "left:24px");
+  RequireContains(html, "left:58.72px");
 }
 
 TEST_CASE("Visual fixture keeps wrapped code layout stable") {
@@ -167,11 +167,11 @@ TEST_CASE("Visual fixture keeps wrapped code layout stable") {
   input.options.show_line_numbers = false;
   input.options.padding_y = 20.0;
   input.options.max_columns = 4;
-  input.options.long_line_mode = sweetshot::LongLineMode::Wrap;
+  input.options.long_line_mode = sweetshot::LongLineMode::kWrap;
 
   sweetshot::Renderer renderer;
-  const sweetshot::RenderScene scene = renderer.renderScene(input);
-  const std::string snapshot = sceneLayoutSnapshot(scene);
+  const sweetshot::RenderScene scene = renderer.RenderToScene(input);
+  const std::string snapshot = SceneLayoutSnapshot(scene);
   INFO(snapshot);
   REQUIRE(snapshot == R"snapshot(width=82.72 height=128 text_origin_x=24 char_width=8.68
 line 0 source=0 y=20 line_number=yes focus=no mark=no text="0123" guides=none
@@ -180,16 +180,16 @@ line 2 source=0 y=64 line_number=no focus=no mark=no text="89ab" guides=none
 line 3 source=0 y=86 line_number=no focus=no mark=no text="cdef" guides=none
 )snapshot");
 
-  const std::string svg = renderer.renderToSvg(input);
-  REQUIRE(countOccurrences(svg, "<text ") == 4);
-  requireContains(svg, "width=\"82.72\"");
-  requireContains(svg, "height=\"128\"");
-  requireContains(svg, "<text x=\"24\" y=\"34\" xml:space=\"preserve\">");
-  requireNotContains(svg, "456789");
-  requireNotContains(svg, "text-anchor=\"end\"");
+  const std::string svg = renderer.RenderToSvg(input);
+  REQUIRE(CountOccurrences(svg, "<text ") == 4);
+  RequireContains(svg, "width=\"82.72\"");
+  RequireContains(svg, "height=\"128\"");
+  RequireContains(svg, "<text x=\"24\" y=\"34\" xml:space=\"preserve\">");
+  RequireNotContains(svg, "456789");
+  RequireNotContains(svg, "text-anchor=\"end\"");
 
-  const std::string html = renderer.renderToHtml(input);
-  requireContains(html, ".sweetshot{box-sizing:border-box;width:82.72px;");
-  requireContains(html, ".sweetshot-code{padding-left:24px;");
-  requireNotContains(html, "class=\"sweetshot-gutter\"");
+  const std::string html = renderer.RenderToHtml(input);
+  RequireContains(html, ".sweetshot{box-sizing:border-box;width:82.72px;");
+  RequireContains(html, ".sweetshot-code{padding-left:24px;");
+  RequireNotContains(html, "class=\"sweetshot-gutter\"");
 }
