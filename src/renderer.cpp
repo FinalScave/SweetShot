@@ -36,9 +36,20 @@ namespace sweetshot {
       int32_t style_id {0};
     };
 
+    struct SourceIndentGuide {
+      std::size_t column {0};
+      std::size_t start_line {0};
+      std::size_t end_line {0};
+      int32_t nesting_level {0};
+      int32_t scope_rule_id {-1};
+      bool continues_before {false};
+      bool continues_after {false};
+    };
+
     struct AnalysisResult {
       std::string language;
       std::vector<std::vector<HighlightSegment>> lines;
+      std::vector<SourceIndentGuide> indent_guides;
     };
 
     std::string effectiveSyntaxDirectory(const RenderInput& input, const RendererConfig& config) {
@@ -257,6 +268,27 @@ namespace sweetshot {
           result.lines[line_index].push_back(std::move(segment));
         }
       }
+
+      if (input.options.show_indent_guides) {
+        sweetline::SharedPtr<sweetline::IndentGuideResult> indent_guides =
+          selection.analyzer->analyzeIndentGuides(input.source_text);
+        if (indent_guides != nullptr) {
+          for (const sweetline::IndentGuideLine& guide : indent_guides->guide_lines) {
+            if (guide.column < 0 || guide.start_line < 0 || guide.end_line < guide.start_line) {
+              continue;
+            }
+            SourceIndentGuide segment;
+            segment.column = static_cast<std::size_t>(guide.column);
+            segment.start_line = static_cast<std::size_t>(guide.start_line);
+            segment.end_line = static_cast<std::size_t>(guide.end_line);
+            segment.nesting_level = guide.nesting_level;
+            segment.scope_rule_id = guide.scope_rule_id;
+            segment.continues_before = guide.continues_before;
+            segment.continues_after = guide.continues_after;
+            result.indent_guides.push_back(segment);
+          }
+        }
+      }
       return result;
     }
 
@@ -343,6 +375,58 @@ namespace sweetshot {
           : total_columns;
       ranges.push_back({0, end_column, true});
       return ranges;
+    }
+
+    bool guideColumnVisible(std::size_t column, const VisualRange& range, std::size_t column_limit) {
+      if (range.start_column == range.end_column) {
+        return column >= range.start_column
+          && (column_limit == 0 || column <= range.start_column + column_limit);
+      }
+      return column >= range.start_column && column <= range.end_column;
+    }
+
+    bool guideLineVisible(const SourceIndentGuide& segment, std::size_t source_line) {
+      if (source_line < segment.start_line || source_line > segment.end_line) {
+        return false;
+      }
+      if (segment.scope_rule_id < 0) {
+        return true;
+      }
+      if (!segment.continues_before && source_line == segment.start_line) {
+        return false;
+      }
+      if (!segment.continues_after && source_line == segment.end_line) {
+        return false;
+      }
+      return true;
+    }
+
+    std::vector<SceneIndentGuide> indentGuidesForRange(const std::vector<SourceIndentGuide>& guides,
+                                                       std::size_t source_line,
+                                                       const VisualRange& range,
+                                                       double text_origin_x,
+                                                       double char_width,
+                                                       std::size_t column_limit) {
+      std::vector<SceneIndentGuide> result;
+      for (const SourceIndentGuide& segment : guides) {
+        if (source_line < segment.start_line || source_line > segment.end_line) {
+          continue;
+        }
+        if (!guideLineVisible(segment, source_line)) {
+          continue;
+        }
+        if (!guideColumnVisible(segment.column, range, column_limit)) {
+          continue;
+        }
+        SceneIndentGuide guide;
+        guide.column = segment.column;
+        guide.x = text_origin_x + static_cast<double>(segment.column - range.start_column) * char_width;
+        guide.nesting_level = segment.nesting_level;
+        guide.continues_before = segment.continues_before;
+        guide.continues_after = segment.continues_after;
+        result.push_back(guide);
+      }
+      return result;
     }
 
     std::vector<HighlightSegment> sliceSegmentsForRange(const std::string& line,
@@ -493,6 +577,13 @@ namespace sweetshot {
         scene_line.marked = mark_lines.find(line_index) != mark_lines.end();
         scene_line.line_number_visible = range.line_number_visible;
         max_visual_columns = std::max(max_visual_columns, charCount(scene_line.text));
+        if (input.options.show_indent_guides) {
+          scene_line.indent_guides = indentGuidesForRange(analysis.indent_guides, line_index, range,
+                                                          scene.text_origin_x, scene.char_width, column_limit);
+          for (const SceneIndentGuide& guide : scene_line.indent_guides) {
+            max_visual_columns = std::max(max_visual_columns, guide.column - range.start_column + 1);
+          }
+        }
 
         for (const HighlightSegment& segment :
              sliceSegmentsForRange(source_lines[line_index], segments, range.start_column, range.end_column)) {
@@ -557,6 +648,15 @@ namespace sweetshot {
             << (line.source_line + 1) << "</text>\n";
       }
 
+      if (scene.options.show_indent_guides) {
+        for (const SceneIndentGuide& guide : line.indent_guides) {
+          svg << "<line class=\"sweetshot-indent-guide\" x1=\"" << guide.x
+              << "\" y1=\"" << line.y << "\" x2=\"" << guide.x
+              << "\" y2=\"" << line.y + scene.options.line_height << "\" stroke=\""
+              << escapeXml(scene.theme.indent_guide_foreground) << "\" stroke-width=\"1\"/>\n";
+        }
+      }
+
       const bool has_text = std::any_of(line.runs.begin(), line.runs.end(), [](const TextRun& run) {
         return !run.text.empty();
       });
@@ -596,7 +696,11 @@ namespace sweetshot {
          << ";background:" << scene.theme.line_number_background << ";border-right:1px solid "
          << scene.theme.gutter_border << ";user-select:none;}\n";
     html << ".sweetshot-code{padding-left:" << scene.options.padding_x
-         << "px;min-width:0;white-space:pre;}\n";
+         << "px;min-width:0;white-space:pre;position:relative;}\n";
+    if (scene.options.show_indent_guides) {
+      html << ".sweetshot-indent-guide{position:absolute;top:0;bottom:0;width:0;border-left:1px solid "
+           << scene.theme.indent_guide_foreground << ";pointer-events:none;}\n";
+    }
     html << "</style></head><body><div class=\"sweetshot\">";
 
     for (const SceneLine& line : scene.lines) {
@@ -610,6 +714,13 @@ namespace sweetshot {
         html << "</span>";
       }
       html << "<span class=\"sweetshot-code\">";
+      if (scene.options.show_indent_guides) {
+        for (const SceneIndentGuide& guide : line.indent_guides) {
+          const double left = scene.options.padding_x + guide.x - scene.text_origin_x;
+          html << "<span class=\"sweetshot-indent-guide\" style=\"left:"
+               << left << "px\"></span>";
+        }
+      }
       for (const TextRun& run : line.runs) {
         if (run.text.empty()) {
           continue;

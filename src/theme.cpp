@@ -96,6 +96,7 @@ namespace sweetshot {
       theme.line_number_foreground = blendColor(theme.foreground, theme.background, 0.48);
       theme.line_number_background = blendColor(theme.background, theme.foreground, 0.08);
       theme.gutter_border = blendColor(theme.background, theme.foreground, 0.14);
+      theme.indent_guide_foreground = blendColor(theme.foreground, theme.background, 0.34);
       theme.focus_background = blendColor(theme.background,
                                           theme.token_styles[token_style_id::Keyword].foreground, 0.20);
       theme.mark_background = blendColor(theme.background,

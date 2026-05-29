@@ -41,6 +41,7 @@ namespace sweetshot {
     std::string line_number_foreground;
     std::string line_number_background;
     std::string gutter_border;
+    std::string indent_guide_foreground;
     std::string focus_background;
     std::string mark_background;
     std::unordered_map<int32_t, TextStyle> token_styles;

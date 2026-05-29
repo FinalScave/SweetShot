@@ -21,6 +21,7 @@ namespace sweetshot {
 
   struct RenderOptions {
     bool show_line_numbers {true};
+    bool show_indent_guides {true};
     std::size_t tab_size {4};
     double font_size {14.0};
     double line_height {22.0};

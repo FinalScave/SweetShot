@@ -79,6 +79,115 @@ TEST_CASE("Renderer emits SVG code lines as continuous tspans") {
   requireContains(svg, ">return</tspan>");
 }
 
+TEST_CASE("Renderer emits indent guides") {
+  const std::filesystem::path syntax_directory =
+    std::filesystem::temp_directory_path() / "sweetshot-indent-guide-syntax-test";
+  std::filesystem::remove_all(syntax_directory);
+  std::filesystem::create_directories(syntax_directory);
+
+  {
+    std::ofstream syntax_file(syntax_directory / "plain.json");
+    syntax_file << R"json({
+  "name": "plain",
+  "fileSuffixes": [".plain"],
+  "states": {
+    "default": [
+      {
+        "pattern": "\\w+",
+        "style": "variable"
+      }
+    ]
+  }
+})json";
+  }
+
+  sweetshot::RenderInput input;
+  input.source_text = "root\n    child\n        leaf\n    sibling";
+  input.file_name = "sample.plain";
+  input.syntax_directory = syntax_directory.string();
+
+  sweetshot::Renderer renderer;
+  sweetshot::RenderScene scene = renderer.renderScene(input);
+  REQUIRE(scene.lines.size() == 4);
+  REQUIRE(scene.lines[1].indent_guides.size() == 1);
+  CHECK(scene.lines[1].indent_guides[0].column == 4);
+
+  const auto has_inner_guide = std::any_of(scene.lines[2].indent_guides.begin(),
+                                          scene.lines[2].indent_guides.end(), [](const auto& guide) {
+    return guide.column == 8;
+  });
+  REQUIRE(has_inner_guide);
+
+  const std::string svg = renderer.renderToSvg(input);
+  requireContains(svg, "class=\"sweetshot-indent-guide\"");
+
+  const std::string html = renderer.renderToHtml(input);
+  requireContains(html, "sweetshot-indent-guide");
+
+  input.options.show_indent_guides = false;
+  scene = renderer.renderScene(input);
+  REQUIRE(scene.lines[1].indent_guides.empty());
+  requireNotContains(renderer.renderToSvg(input), "sweetshot-indent-guide");
+  requireNotContains(renderer.renderToHtml(input), "sweetshot-indent-guide");
+
+  std::filesystem::remove_all(syntax_directory);
+}
+
+TEST_CASE("Renderer keeps scoped indent guides inside scope markers") {
+  const std::filesystem::path syntax_directory =
+    std::filesystem::temp_directory_path() / "sweetshot-scoped-indent-guide-syntax-test";
+  std::filesystem::remove_all(syntax_directory);
+  std::filesystem::create_directories(syntax_directory);
+
+  {
+    std::ofstream syntax_file(syntax_directory / "brace.json");
+    syntax_file << R"json({
+  "name": "brace",
+  "fileSuffixes": [".brace"],
+  "states": {
+    "default": [
+      {
+        "pattern": "[{}]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      {
+        "kind": "delimiter",
+        "start": "{",
+        "end": "}"
+      }
+    ]
+  }
+})json";
+  }
+
+  sweetshot::RenderInput input;
+  input.source_text = "{\n    child\n}";
+  input.file_name = "sample.brace";
+  input.syntax_directory = syntax_directory.string();
+
+  sweetshot::Renderer renderer;
+  const sweetshot::RenderScene scene = renderer.renderScene(input);
+  REQUIRE(scene.lines.size() == 3);
+  CHECK(scene.lines[0].indent_guides.empty());
+  REQUIRE(scene.lines[1].indent_guides.size() == 1);
+  CHECK(scene.lines[1].indent_guides[0].column == 0);
+  CHECK(scene.lines[2].indent_guides.empty());
+
+  const std::string svg = renderer.renderToSvg(input);
+  requireContains(svg, "class=\"sweetshot-indent-guide\"");
+  requireContains(svg, "y1=\"42\"");
+  requireContains(svg, "y2=\"64\"");
+  requireNotContains(svg, "y1=\"20\"");
+  requireNotContains(svg, "y2=\"86\"");
+
+  std::filesystem::remove_all(syntax_directory);
+}
+
 TEST_CASE("Builtin themes follow SweetLine defaults") {
   const sweetshot::Theme default_theme = sweetshot::builtinTheme("");
   REQUIRE(default_theme.name == "sweetline-dark");

@@ -19,6 +19,14 @@ namespace sweetshot {
     TextStyle style;
   };
 
+  struct SceneIndentGuide {
+    std::size_t column {0};
+    double x {0.0};
+    int32_t nesting_level {0};
+    bool continues_before {false};
+    bool continues_after {false};
+  };
+
   struct SceneLine {
     std::size_t source_line {0};
     std::string text;
@@ -26,6 +34,7 @@ namespace sweetshot {
     bool focused {false};
     bool marked {false};
     bool line_number_visible {true};
+    std::vector<SceneIndentGuide> indent_guides;
     std::vector<TextRun> runs;
   };
 

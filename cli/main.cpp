@@ -32,6 +32,7 @@ namespace {
            << "  --focus <range-list>     Highlight one-based lines, such as 4 or 4:8,12\n"
            << "  --mark <range-list>      Mark one-based lines, such as 4 or 4:8,12\n"
            << "  --no-line-numbers        Hide line numbers\n"
+           << "  --no-indent-guides       Hide indent guide lines\n"
            << "  -h, --help               Show this help message\n";
   }
 
@@ -164,6 +165,8 @@ namespace {
         options.render_options.mark_lines = parseLineList(requireValue(index, argc, argv, arg));
       } else if (arg == "--no-line-numbers") {
         options.render_options.show_line_numbers = false;
+      } else if (arg == "--no-indent-guides") {
+        options.render_options.show_indent_guides = false;
       } else if (!arg.empty() && arg.front() == '-') {
         throw std::runtime_error("Unknown option: " + arg);
       } else if (options.input_path.empty()) {
