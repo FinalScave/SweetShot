@@ -194,6 +194,7 @@ TEST_CASE("Builtin themes follow SweetLine defaults") {
   REQUIRE(default_theme.name == "sweetline-dark");
   REQUIRE(default_theme.background == "#1e1e1e");
   REQUIRE(default_theme.foreground == "#d4d4d4");
+  REQUIRE(default_theme.indent_guide_foreground == "#5e5e5e");
   REQUIRE(default_theme.styleForToken(sweetshot::token_style_id::Keyword).foreground == "#569cd6");
   REQUIRE(default_theme.styleForToken(sweetshot::token_style_id::Builtin).foreground == "#569cd6");
   REQUIRE(default_theme.styleForToken(sweetshot::token_style_id::Property).foreground == "#9cdcfe");
