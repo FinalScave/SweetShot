@@ -139,8 +139,8 @@ TEST_CASE("Default PNG rasterizer renders PNG bytes") {
     "<rect width=\"3\" height=\"2\" fill=\"#ff0000\"/></svg>",
     {});
 
-  REQUIRE(png.width == 3);
-  REQUIRE(png.height == 2);
+  REQUIRE(png.width == 9);
+  REQUIRE(png.height == 6);
   REQUIRE(png.bytes.size() > 8);
   REQUIRE(png.bytes[0] == 137);
   REQUIRE(png.bytes[1] == 80);

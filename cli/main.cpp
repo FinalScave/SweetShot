@@ -20,7 +20,7 @@ namespace {
     std::string language;
     std::string theme {"default"};
     std::string syntax_directory;
-    double png_scale {2.0};
+    double png_scale {3.0};
     sweetshot::RenderOptions render_options;
   };
 
@@ -31,7 +31,7 @@ namespace {
            << "  -o, --output <path>       Write SVG, PNG, or HTML output\n"
            << "  --lang <name>            Override language detection\n"
            << "  --theme <name>           default, vscode-dark, monokai, dracula, one-dark, solarized-dark, nord, github-dark, or github-light\n"
-           << "  --scale <factor>         PNG output scale factor, defaults to 2\n"
+           << "  --scale <factor>         PNG output scale factor, defaults to 3\n"
            << "  --syntax-dir <path>      Override SweetLine syntax directory\n"
            << "  --lines <start:end>      Render a one-based inclusive line range\n"
            << "  --focus <range-list>     Highlight one-based lines, such as 4 or 4:8,12\n"

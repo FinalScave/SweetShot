@@ -9,7 +9,7 @@
 
 namespace sweetshot {
   struct PngOptions {
-    double scale {1.0};
+    double scale {3.0};
     std::string background;
   };
 

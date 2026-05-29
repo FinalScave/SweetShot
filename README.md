@@ -15,6 +15,14 @@ Syntax highlighting and themes come from SweetLine. Output can be SVG, PNG, or H
 - Indent guides for nested code blocks
 - PNG rendering through `resvg` or `lunasvg`
 
+## Example
+
+```bash
+build/bin/sweetshot src/lunasvg_rasterizer.cpp --lines 84:112 --focus 87:111 -o docs/images/readme-indent-guides.png
+```
+
+<img src="docs/images/readme-indent-guides.png" width="760" alt="SweetShot indent guides example">
+
 ## Build
 
 You need CMake and a C++17 compiler. The default PNG backend is `resvg`, so the default build also needs Rust/Cargo.
@@ -46,11 +54,11 @@ build/bin/sweetshot main.cpp --theme default --lines 20:60 --focus 32:38 -o part
 cat main.cpp | build/bin/sweetshot --lang cpp -o stdin.html
 ```
 
-PNG output uses the configured backend. It renders at 2x scale by default so text stays sharp in normal use.
+PNG output uses the configured backend. It renders at 3x scale by default so text stays sharp in normal use.
 
 Common flags:
 
-- `--scale <factor>` sets the PNG output scale. The default is `2`.
+- `--scale <factor>` sets the PNG output scale. The default is `3`.
 - `--theme <name>` selects a built-in theme.
 - `--lines <start:end>` renders a one-based inclusive line range.
 - `--focus <range-list>` highlights one-based lines.

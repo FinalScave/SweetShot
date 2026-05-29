@@ -15,6 +15,14 @@ SweetShot 是一个代码截图生成器。
 - indent guides，截图里也能看出代码块层级
 - PNG 后端可选 `resvg` 或 `lunasvg`
 
+## 示例
+
+```bash
+build/bin/sweetshot src/lunasvg_rasterizer.cpp --lines 84:112 --focus 87:111 -o docs/images/readme-indent-guides.png
+```
+
+<img src="docs/images/readme-indent-guides.png" width="760" alt="SweetShot indent guides example">
+
 ## 构建
 
 需要 CMake 和 C++17 编译器。默认 PNG 后端是 `resvg`，所以默认构建还需要 Rust/Cargo。
@@ -46,11 +54,11 @@ build/bin/sweetshot main.cpp --theme default --lines 20:60 --focus 32:38 -o part
 cat main.cpp | build/bin/sweetshot --lang cpp -o stdin.html
 ```
 
-PNG 输出使用配置的后端。默认以 2x scale 渲染，正常使用时文字会更清晰。
+PNG 输出使用配置的后端。默认以 3x scale 渲染，正常使用时文字会更清晰。
 
 常用参数：
 
-- `--scale <factor>` 设置 PNG 输出缩放倍数，默认是 `2`。
+- `--scale <factor>` 设置 PNG 输出缩放倍数，默认是 `3`。
 - `--theme <name>` 选择内置主题。
 - `--lines <start:end>` 渲染一段从 1 开始计数的闭区间行范围。
 - `--focus <range-list>` 高亮从 1 开始计数的行。
