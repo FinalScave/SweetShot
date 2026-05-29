@@ -17,13 +17,13 @@ namespace sweetshot {
     inline constexpr int32_t Variable = 7;
     inline constexpr int32_t Punctuation = 8;
     inline constexpr int32_t Annotation = 9;
-    inline constexpr int32_t Builtin = 10;
-    inline constexpr int32_t Preprocessor = 11;
-    inline constexpr int32_t Macro = 12;
-    inline constexpr int32_t Property = 13;
-    inline constexpr int32_t Lifetime = 14;
-    inline constexpr int32_t Selector = 15;
-    inline constexpr int32_t Url = 16;
+    inline constexpr int32_t Preprocessor = 10;
+    inline constexpr int32_t Macro = 11;
+    inline constexpr int32_t Lifetime = 12;
+    inline constexpr int32_t Selector = 13;
+    inline constexpr int32_t Builtin = 14;
+    inline constexpr int32_t Url = 15;
+    inline constexpr int32_t Property = 16;
   }
 
   struct TextStyle {
@@ -48,9 +48,14 @@ namespace sweetshot {
     TextStyle styleForToken(int32_t style_id) const;
   };
 
+  Theme sweetLineDarkTheme();
+  Theme monokaiTheme();
+  Theme draculaTheme();
   Theme githubLightTheme();
   Theme githubDarkTheme();
   Theme oneDarkTheme();
+  Theme solarizedDarkTheme();
+  Theme nordTheme();
   Theme builtinTheme(const std::string& name);
 }
 

@@ -88,13 +88,13 @@ namespace sweetshot {
       engine->registerStyleName("variable", token_style_id::Variable);
       engine->registerStyleName("punctuation", token_style_id::Punctuation);
       engine->registerStyleName("annotation", token_style_id::Annotation);
-      engine->registerStyleName("builtin", token_style_id::Builtin);
       engine->registerStyleName("preprocessor", token_style_id::Preprocessor);
       engine->registerStyleName("macro", token_style_id::Macro);
-      engine->registerStyleName("property", token_style_id::Property);
       engine->registerStyleName("lifetime", token_style_id::Lifetime);
       engine->registerStyleName("selector", token_style_id::Selector);
+      engine->registerStyleName("builtin", token_style_id::Builtin);
       engine->registerStyleName("url", token_style_id::Url);
+      engine->registerStyleName("property", token_style_id::Property);
     }
 
     RendererState::CachedEngine& cachedEngine(RendererState& state, const RenderInput& input,
