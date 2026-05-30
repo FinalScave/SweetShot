@@ -584,15 +584,5 @@
         "style": "comment"
       }
     ]
-  },
-  "scopeRules": {
-    "skips": [
-      { "kind": "lineComment", "start": "//" },
-      { "kind": "blockComment", "start": "(*", "end": "*)" },
-      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
-    ],
-    "rules": [
-      { "kind": "delimiter", "start": "(", "end": ")" }
-    ]
   }
 }
