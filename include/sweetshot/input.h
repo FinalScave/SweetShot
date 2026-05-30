@@ -30,7 +30,7 @@ namespace sweetshot {
     double gutter_width {48.0};
     double max_width {1200.0};
     std::string font_family {
-      "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace"
+      "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Noto Mono\", \"Liberation Mono\", monospace"
     };
     LongLineMode long_line_mode {LongLineMode::kClip};
     std::size_t max_columns {120};

@@ -39,6 +39,13 @@ include(cmake/SweetShotThirdParty.cmake)
 set(SWEETSHOT_PUBLIC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SWEETSHOT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
+cmrc_add_resource_library(sweetshot_resources
+        ALIAS SweetShot::resources
+        NAMESPACE sweetshot_resources
+        WHENCE ${PROJECT_SOURCE_DIR}/3dparty
+        ${PROJECT_SOURCE_DIR}/3dparty/fonts/NotoMono-Regular.ttf
+)
+
 add_library(sweetshot_core STATIC
         ${SWEETSHOT_SRC_DIR}/renderer.cpp
         ${SWEETSHOT_PNG_BACKEND_SOURCE}
@@ -63,6 +70,7 @@ target_link_libraries(sweetshot_core PUBLIC
 )
 target_link_libraries(sweetshot_core PRIVATE
         SweetShot3p::lodepng
+        SweetShot::resources
         ${SWEETSHOT_PNG_BACKEND_TARGET}
 )
 

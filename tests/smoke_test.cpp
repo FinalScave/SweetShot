@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "lodepng.h"
+
 #include "sweetshot/sweetshot.h"
 
 namespace {
@@ -44,6 +46,26 @@ namespace {
     std::string captured_svg;
     sweetshot::PngOptions captured_options;
   };
+
+  std::vector<std::uint8_t> DecodeRgba(const std::vector<std::uint8_t>& png, unsigned& width, unsigned& height) {
+    std::vector<unsigned char> decoded;
+    const unsigned error = lodepng::decode(decoded, width, height, png, LCT_RGBA, 8);
+    REQUIRE(error == 0);
+    return {decoded.begin(), decoded.end()};
+  }
+
+  std::size_t CountNonBackgroundPixels(const std::vector<std::uint8_t>& rgba,
+                                       std::uint8_t red,
+                                       std::uint8_t green,
+                                       std::uint8_t blue) {
+    std::size_t count = 0;
+    for (std::size_t index = 0; index + 3 < rgba.size(); index += 4) {
+      if (rgba[index] != red || rgba[index + 1] != green || rgba[index + 2] != blue) {
+        ++count;
+      }
+    }
+    return count;
+  }
 }
 
 TEST_CASE("Renderer produces highlighted scenes and outputs") {
@@ -162,6 +184,31 @@ TEST_CASE("Default PNG rasterizer applies PNG scale") {
   REQUIRE(png.width == 6);
   REQUIRE(png.height == 4);
 }
+
+#if defined(SWEETSHOT_PNG_BACKEND_RESVG)
+TEST_CASE("Default PNG rasterizer renders text with the embedded fallback font") {
+  const std::shared_ptr<sweetshot::SvgRasterizer> rasterizer = sweetshot::CreateDefaultSvgRasterizer();
+  REQUIRE(rasterizer);
+
+  sweetshot::PngOptions options;
+  options.scale = 1.0;
+  options.background = "#000000";
+
+  const sweetshot::PngResult png = rasterizer->Rasterize(
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"240\" height=\"64\">"
+    "<rect width=\"240\" height=\"64\" fill=\"#000000\"/>"
+    "<text x=\"16\" y=\"42\" font-family=\"monospace\" font-size=\"32\" fill=\"#ffffff\">ABC123</text>"
+    "</svg>",
+    options);
+
+  unsigned width = 0;
+  unsigned height = 0;
+  const std::vector<std::uint8_t> rgba = DecodeRgba(png.bytes, width, height);
+  REQUIRE(width == png.width);
+  REQUIRE(height == png.height);
+  REQUIRE(CountNonBackgroundPixels(rgba, 0, 0, 0) > 100);
+}
+#endif
 
 TEST_CASE("Default PNG rasterizer writes compressed PNG bytes") {
   const std::shared_ptr<sweetshot::SvgRasterizer> rasterizer = sweetshot::CreateDefaultSvgRasterizer();

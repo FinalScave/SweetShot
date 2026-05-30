@@ -10,6 +10,7 @@ target_compile_features(${TEST_PRODUCT_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${TEST_PRODUCT_NAME} PRIVATE
         SweetShot::core
         SweetShot3p::Catch2
+        SweetShot3p::lodepng
 )
 target_compile_definitions(${TEST_PRODUCT_NAME} PRIVATE
         SWEETSHOT_TEST_SYNTAX_DIR="${SWEETSHOT_3P_SWEETLINE_SOURCE_DIR}/syntaxes"
