@@ -15,7 +15,7 @@ set(SWEETLINE_BUILD_WASM_EMBIND OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
         sweetline
         GIT_REPOSITORY https://github.com/FinalScave/SweetLine.git
-        GIT_TAG f8aa883b50f2e748098420917fbef5865b55a861
+        GIT_TAG 4c4ea1847c8bfe5d00029c482b414c1250e40199
         GIT_SUBMODULES ""
 )
 FetchContent_MakeAvailable(sweetline)

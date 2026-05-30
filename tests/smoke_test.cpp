@@ -118,6 +118,20 @@ TEST_CASE("Renderer emits SVG code lines as continuous tspans") {
   RequireContains(svg, ">return</tspan>");
 }
 
+TEST_CASE("Renderer keeps HTML leading spaces as text") {
+  sweetshot::RenderInput input;
+  input.source_text = "if (ready) {\n  return value;\n}";
+  input.file_name = "main.cpp";
+  input.language_hint = "cpp";
+  input.syntax_directory = SWEETSHOT_TEST_SYNTAX_DIR;
+  input.options.show_line_numbers = false;
+
+  sweetshot::Renderer renderer;
+  const std::string html = renderer.RenderToHtml(input);
+  RequireContains(html, ">  </span>");
+  RequireNotContains(html, "display:inline-block;width:");
+}
+
 TEST_CASE("Renderer renders PNG through SVG rasterizer backend") {
   sweetshot::RenderInput input;
   input.source_text = "return 42;";
@@ -276,14 +290,16 @@ TEST_CASE("Renderer emits indent guides") {
   sweetshot::Renderer renderer;
   sweetshot::RenderScene scene = renderer.RenderToScene(input);
   REQUIRE(scene.lines.size() == 4);
+  CHECK(scene.lines[0].indent_guides.empty());
   REQUIRE(scene.lines[1].indent_guides.size() == 1);
-  CHECK(scene.lines[1].indent_guides[0].column == 4);
+  CHECK(scene.lines[1].indent_guides[0].column == 0);
 
   const auto has_inner_guide = std::any_of(scene.lines[2].indent_guides.begin(),
                                           scene.lines[2].indent_guides.end(), [](const auto& guide) {
-    return guide.column == 8;
+    return guide.column == 4;
   });
   REQUIRE(has_inner_guide);
+  CHECK(scene.lines[3].indent_guides.empty());
 
   const std::string svg = renderer.RenderToSvg(input);
   RequireContains(svg, "class=\"sweetshot-indent-guide\"");

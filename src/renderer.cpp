@@ -236,6 +236,27 @@ namespace sweetshot {
       return sweetline::Utf8Util::utf8Substr(text, start, count);
     }
 
+    std::size_t LeadingWhitespaceColumns(const std::string& text) {
+      std::size_t columns = 0;
+      for (char ch : text) {
+        if (ch != ' ') {
+          break;
+        }
+        ++columns;
+      }
+      return columns;
+    }
+
+    std::string TrimLeadingColumns(const std::string& text, std::size_t& remaining_columns) {
+      if (remaining_columns == 0 || text.empty()) {
+        return text;
+      }
+      const std::size_t char_count = CharCount(text);
+      const std::size_t trim_count = std::min(remaining_columns, char_count);
+      remaining_columns -= trim_count;
+      return Utf8Substr(text, trim_count, char_count - trim_count);
+    }
+
     AnalysisResult AnalyzeInput(const RenderInput& input, const RendererConfig& config, RendererState& state,
                                 const std::vector<std::string>& source_lines) {
       AnalysisResult result;
@@ -419,9 +440,6 @@ namespace sweetshot {
     bool GuideLineVisible(const SourceIndentGuide& segment, std::size_t source_line) {
       if (source_line < segment.start_line || source_line > segment.end_line) {
         return false;
-      }
-      if (segment.scope_rule_id < 0) {
-        return true;
       }
       if (!segment.continues_before && source_line == segment.start_line) {
         return false;
@@ -685,17 +703,23 @@ namespace sweetshot {
         }
       }
 
-      const bool has_text = std::any_of(line.runs.begin(), line.runs.end(), [](const TextRun& run) {
-        return !run.text.empty();
-      });
+      const std::size_t leading_columns = LeadingWhitespaceColumns(line.text);
+      std::size_t leading_scan_columns = leading_columns;
+      const bool has_text = std::any_of(line.runs.begin(), line.runs.end(),
+        [&leading_scan_columns](const TextRun& run) {
+          return !TrimLeadingColumns(run.text, leading_scan_columns).empty();
+        });
       if (has_text) {
-        svg << "<text x=\"" << scene.text_origin_x << "\" y=\"" << line.y + scene.options.font_size
+        const double text_x = scene.text_origin_x + static_cast<double>(leading_columns) * scene.char_width;
+        svg << "<text x=\"" << text_x << "\" y=\"" << line.y + scene.options.font_size
             << "\" xml:space=\"preserve\">";
+        std::size_t remaining_leading_columns = leading_columns;
         for (const TextRun& run : line.runs) {
-          if (run.text.empty()) {
+          const std::string text = TrimLeadingColumns(run.text, remaining_leading_columns);
+          if (text.empty()) {
             continue;
           }
-          svg << "<tspan" << SvgFontStyle(run.style) << ">" << EscapeXml(run.text) << "</tspan>";
+          svg << "<tspan" << SvgFontStyle(run.style) << ">" << EscapeXml(text) << "</tspan>";
         }
         svg << "</text>\n";
       }
