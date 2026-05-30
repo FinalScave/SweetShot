@@ -68,19 +68,18 @@ Use quotes around paths with spaces.
 - Prefer snippets with nested `if`, `for`, `switch`, classes, or callbacks when showing indent guides
 - Avoid snippets dominated by large strings, generated code, or repetitive data tables
 - Omit `--theme` unless the user asks for a specific theme
+- Omit `--focus` and `--mark` unless the user asks to highlight or mark specific lines
 
 ## Common Flags
 
 ```bash
 sweetshot src/file.cpp --syntax-dir <syntax-dir> --lines 40:80 -o docs/images/example.png
-sweetshot src/file.cpp --syntax-dir <syntax-dir> --lines 40:80 --focus 52:61 -o docs/images/example.png
-sweetshot src/file.cpp --syntax-dir <syntax-dir> --lines 40:80 --mark 66:70 -o docs/images/example.png
 sweetshot src/file.cpp --syntax-dir <syntax-dir> --scale 4 -o docs/images/example.png
 ```
 
 - `--lines <start:end>` renders a one-based inclusive line range
-- `--focus <range-list>` highlights important lines, such as `12` or `12:18,24`
-- `--mark <range-list>` marks supporting lines
+- `--focus <range-list>` highlights specific lines when requested, such as `12` or `12:18,24`
+- `--mark <range-list>` marks specific lines when requested
 - `--theme <name>` selects a built-in theme
 - `--scale <factor>` controls PNG raster scale
 - `--no-line-numbers` hides line numbers
@@ -94,7 +93,7 @@ For README or docs images:
 
 1. Pick a real source file from the repository
 2. Choose a compact line range that shows useful structure
-3. Use `--focus` to highlight the important block
+3. Use `--focus` or `--mark` only when the user asks for line callouts
 4. Write PNG output under `docs/images/` unless the user gives another path
 5. Verify the file exists and inspect the image when visual quality matters
 6. Reference it from Markdown with a relative path or an HTML `<img>` tag with a display width
@@ -102,7 +101,7 @@ For README or docs images:
 Example:
 
 ```bash
-sweetshot src/lunasvg_rasterizer.cpp --syntax-dir <syntax-dir> --lines 84:112 --focus 87:111 -o docs/images/readme-indent-guides.png
+sweetshot src/lunasvg_rasterizer.cpp --syntax-dir <syntax-dir> --lines 84:112 -o docs/images/readme-indent-guides.png
 ```
 
 Markdown:
