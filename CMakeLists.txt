@@ -74,13 +74,6 @@ endif ()
 if (SWEETSHOT_BUILD_CLI)
     add_executable(sweetshot cli/main.cpp)
     target_link_libraries(sweetshot PRIVATE SweetShot::core)
-    if (WIN32 AND SWEETSHOT_PNG_BACKEND STREQUAL "resvg")
-        add_custom_command(TARGET sweetshot POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:SweetShot3p::resvg>
-                $<TARGET_FILE_DIR:sweetshot>
-        )
-    endif ()
 endif ()
 
 if (SWEETSHOT_BUILD_TESTS)

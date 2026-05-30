@@ -66,3 +66,9 @@ Common flags:
 - `--no-line-numbers` hides line numbers.
 - `--no-indent-guides` hides indent guide lines.
 - `--syntax-dir <path>` overrides the SweetLine syntax directory.
+
+## Agent Skill
+
+`skill/sweetshot-code-screenshot/` packages SweetShot for agents that need to generate code screenshots without building this repository first.
+
+The skill includes platform binaries, bundled SweetLine syntax files, and `SKILL.md` with invocation rules. Agent integrations should prefer the binary under the skill directory and pass `--syntax-dir`; when no syntax directory is provided, use `skill/sweetshot-code-screenshot/syntaxes`.

@@ -1,0 +1,401 @@
+{
+  "name": "powershell",
+  "fileSuffixes": [".ps1", ".psm1", ".psd1"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^']|'')*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "singleStringContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:`.|[^\"])*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "doubleStringContent"]
+      }
+    ],
+    "bracedVariableRule": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "simpleVariableRule": [
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "specialVariableRule": [
+      {
+        "pattern": "(\\$)([_?$^])",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "<#",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "@\"",
+        "style": "string",
+        "state": "hereStringDouble"
+      },
+      {
+        "pattern": "@'",
+        "style": "string",
+        "state": "hereStringSingle"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b(using)${whiteSpace}+(namespace|module|assembly|type)${whiteSpace}+([\\w.]+)",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "\\b(function|filter)${whiteSpace}+([a-zA-Z_]\\w*(?:-\\w+)*)",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(class|enum)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:if|else|elseif|foreach|for|while|do|until|switch|default|break|continue|return|exit|throw|trap|try|catch|finally)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:param|begin|process|end|clean|dynamicparam|data|hidden|static)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:in|class|enum|using|workflow|configuration|parallel|sequence|inlinescript)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\$(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\$(?:\\?|\\^|\\$)",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\$(?:_|args|input|PSItem|Error|Host|PWD|HOME|Profile|PSVersionTable|PSCmdlet|PSBoundParameters|MyInvocation|PSScriptRoot|PSCommandPath|LastExitCode|Matches|ForEach|switch|this|ErrorActionPreference|WarningPreference|VerbosePreference)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(\\$)(env|global|local|script|private|using|variable|function|alias)(:)(${identifier})",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "variable"]
+      },
+      {
+        "include": "bracedVariableRule"
+      },
+      {
+        "pattern": "(@)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "includes": ["simpleVariableRule", "specialVariableRule"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\()([^)]*)(\\))(\\])",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "attrArgs"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})(\\()",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "method", 6, "punctuation"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "variable"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*(?:\\[\\])?)(\\])",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "-(?:eq|ne|gt|ge|lt|le|like|notlike|match|notmatch|replace|contains|notcontains|in|notin|is|isnot|join|split|f|and|or|not|xor|bnot|band|bor|bxor|shl|shr|ceq|cne|cgt|cge|clt|cle|clike|cnotlike|cmatch|cnotmatch|creplace|ieq|ine|igt|ige|ilt|ile|ilike|inotlike|imatch|inotmatch|ireplace|as)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(-)(${identifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "\\b[A-Za-z]\\w*-[A-Za-z]\\w*\\b",
+        "style": "method"
+      },
+      {
+        "pattern": "(\\.)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*(?:\\.[0-9_]+)?(?:[eE][+-]?[0-9]+)?(?:kb|mb|gb|tb|pb|d|l)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\+=|-=|\\*=|/=|%=|\\?\\?=",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\|\\||&&|\\?\\.|\\.\\.|::|=>|\\+\\+|--|[.()\\[\\]{}|;,@!~%^&+\\-*/=<>?:`]",
+        "style": "punctuation"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "#>",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "`.",
+        "style": "string"
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "subexpression"
+      },
+      {
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "singleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "subexpression": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "doubleString"
+      },
+      {
+        "includes": ["simpleVariableRule", "specialVariableRule"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})(\\()",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "method", 6, "punctuation"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "variable"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(::)(${identifier})(\\()",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(::)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "subexpression"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b[0-9]+\\.?[0-9]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(\\.)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "[.()\\[\\]{}|;,:+\\-*/=<>!@]",
+        "style": "punctuation"
+      }
+    ],
+    "hereStringDouble": [
+      {
+        "pattern": "^\"@",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "hereSubexpr"
+      },
+      {
+        "includes": ["bracedVariableRule", "simpleVariableRule", "urlRule", "stringAnyCharRule"]
+      }
+    ],
+    "hereSubexpr": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "hereStringDouble"
+      },
+      {
+        "include": "simpleVariableRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "variable"
+      }
+    ],
+    "hereStringSingle": [
+      {
+        "pattern": "^'@",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "attrArgs": [
+      {
+        "pattern": "\\$(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "includes": ["simpleVariableRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,=]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "#" },
+      { "kind": "blockComment", "start": "<#", "end": "#>" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "`" },
+      { "kind": "string", "start": "'", "end": "'" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}", "branches": ["else","elseif","catch","finally"] }
+    ]
+  }
+}

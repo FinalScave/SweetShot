@@ -66,3 +66,9 @@ PNG 输出使用配置的后端。默认以 3x scale 渲染，正常使用时文
 - `--no-line-numbers` 隐藏行号。
 - `--no-indent-guides` 隐藏缩进辅助线。
 - `--syntax-dir <path>` 覆盖 SweetLine 语法目录。
+
+## Agent Skill
+
+`skill/sweetshot-code-screenshot/` 是给 agent 直接生成代码截图用的打包目录，不需要先在当前仓库里构建 SweetShot。
+
+目录里包含平台二进制、SweetLine 语法文件和 `SKILL.md`。Agent 集成时优先使用 skill 目录下的二进制，并传入 `--syntax-dir`；没有指定语法目录时，使用 `skill/sweetshot-code-screenshot/syntaxes`。

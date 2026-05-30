@@ -1,0 +1,4 @@
+interface:
+  display_name: "SweetShot Code Screenshot"
+  short_description: "Generate code screenshots with SweetShot"
+  default_prompt: "Use $sweetshot-code-screenshot to generate a code screenshot."

@@ -1,0 +1,276 @@
+{
+  "name": "asm-aarch64",
+  "fileSuffixes": [".aarch64", ".arm64"],
+  "fileNamePatterns": [".*\\.(?:aarch64|arm64|arm)\\.[sS]"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      },
+      {
+        "pattern": "(?m)(^|\\s)(@)(?=\\s|$)(.*)",
+        "styles": [2, "comment", 3, "comment"],
+        "subStates": [3, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(?m)^\\s*((?:\\.[A-Za-z_][A-Za-z0-9_]*|[0-9]+|${identifier}(?:\\.${identifier})*))(\\s*:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(?m)^\\s*(#)(\\s*)(include|define|undef|if|ifdef|ifndef|elif|else|endif)\\b",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)(@)(PAGE|PAGEOFF|GOT|GOTPAGE|GOTPAGEOFF|PLT|TLVPPAGE|TLVPPAGEOFF|function|object|tls_object|gnu_indirect_function|notype|progbits|nobits|note|init_array|fini_array|preinit_array)\\b",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(?i)(:)(abs_g[0-3](?:_nc)?|pg_hi21(?:_nc)?|prel_g[0-3](?:_nc)?|lo12(?:_nc)?|got(?:_lo12)?|gotpage_lo15|tlsdesc(?:_lo12(?:_nc)?)?|tprel_(?:g[0-2](?:_nc)?|lo12(?:_nc)?)|dtprel_(?:g[0-2](?:_nc)?|lo12(?:_nc)?))(:)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)(text|data|bss|section|globl|global|extern|align|balign|p2align|ascii|asciz|string|byte|hword|word|xword|dword|quad|octa|float|double|space|skip|fill|size|type|ident|weak|hidden|protected|internal|local|comm|lcomm|abort|if|else|endif|ifdef|ifndef|elif|include|incbin|error|warning|print|macro|endm|altmacro|noaltmacro|line|file|loc|fnstart|fnend|cantunwind|personality|handlerdata|set|cpu|arch|fpu|arch_extension|inst|tlsdescseq|req|unreq|rept|endr|irp|irpc|ltorg|pool|cfi_startproc|cfi_endproc|cfi_def_cfa|cfi_def_cfa_offset|cfi_offset|cfi_restore|cfi_remember_state|cfi_restore_state)\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(\\.)([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)\\b(mov|movz|movk|movn|movi|mvn|movf|movd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(adr|adrp|prfm|prfum)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(add|adds|adc|adcs|sub|subs|sbc|sbcs|neg|negs|ngc|ngcs|cmp|cmn|ccmp|ccmn)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(and|ands|orr|orrs|eor|eors|eon|orns|bic|bics|bif|bit|bsl|tst)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(lsl|lsr|asr|ror|lslv|lsrv|asrv|rorv|shl|shr|sar)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(uxtb|uxth|uxtw|uxtx|sxtb|sxth|sxtw|sxtx|sbfx|ubfx|bfi|bfxil|extr)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(mul|madd|msub|smull|umull|smulh|umulh|smaddl|umaddl|smsubl|umsubl|smul|umul|smnegl|umnegl)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(sdiv|udiv)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(ldr|ldrb|ldrh|ldrsb|ldrsh|ldrsw|ldur|ldurb|ldurh|ldursb|ldursh|ldursw|ldp|ldpsw|ldxp|ldaxp|ldxr|ldaxr|ldxrb|ldaxrb|ldxrh|ldaxrh|ldar|ldlar|ldarb|ldlarb|ldarh|ldlarh)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(str|strb|strh|stur|sturb|sturh|stp|stxp|stlxp|stxr|stlxr|stxrb|stlxrb|stxrh|stlxrh|stlr|stllr|stlrb|stllrb|stlrh|stllrh)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(ldr|ldrb|ldrh|ldrsb|ldrsh|ldrsw|str|strb|strh|ldp|stp|ldnp|stnp|ldtr|ldtrb|ldtrh|ldtrsb|ldtrsh|ldtrsw|sttr|sttrb|sttrh)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(blr|bl|br|ret|eret|drps|cbz|cbnz|tbz|tbnz|b(?:\\.(?:eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)|eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)?)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(csel|csinc|csinv|csneg|cset|csetm|cinc|cinv|cneg)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(bfm|bfi|bfxil|sbfm|sbfi|sbfx|ubfm|ubfi|ubfx|extr)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(clz|cls|rev|rev16|rev32|rev64|rbit)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(ld1|ld2|ld3|ld4|st1|st2|st3|st4|ld1r|ld2r|ld3r|ld4r|ldnp|stnp|ldp|stp)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(fmov|fmovz|fmovi|fabs|fneg|fsqrt|fadd|fsub|fdiv|fmul|fmadd|fmsub|fnmadd|fnmsub|fmax|fmin|fmaxnm|fminnm|fcmp|fccmp|fccmpe|fcmpe|fcsel|fcvt|fcvtzs|fcvtzu|scvtf|ucvtf|fjcvtzs)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(frinta|frintm|frintn|frintp|frintx|frintz|frinti|frint32x|frint32z|frint64x|frint64z)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(nop|yield|wfe|wfi|sev|sevl|dmb|dsb|isb|hint|clrex|dsb|dmb|isb)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(mrs|msr|sys|sysl|ic|dc|at|tlbi|vmalle1is|vmalle1|alle2is|alle2|alle3is|alle3)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(svc|hvc|smc|brk|hlt|eret|drps|dcps1|dcps2|dcps3)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(crc32b|crc32h|crc32w|crc32x|crc32cb|crc32ch|crc32cw|crc32cx)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(pacia|pacib|paciza|pacizb|pacdza|pacdzb|autia|autib|autiza|autizb|autdza|autdzb|pacda|pacdb|xpaci|xpacd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(x(?:[0-9]|[12][0-9]|3[01])|sp|wsp|lr|fp|xzr)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(w(?:[0-9]|[12][0-9]|3[01])|wzr)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(q(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(v(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(d(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(s(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(b(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(h(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(z(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(p(?:[0-9]|1[0-5]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(el0|el1|el2|el3|currentel|spsel|daifset|daifclr|pan|uao|dit|ssbs|tco)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(sy|st|ld|ish|ishst|ishld|nsh|nshst|nshld|osh|oshst|oshld)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(\\#)(-?0[xX][0-9a-fA-F]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\#)(-?0[bB][01]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\#)(-?[0-9]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "[+\\-*/=&<>!~|^]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

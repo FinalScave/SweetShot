@@ -1,0 +1,268 @@
+{
+  "name": "smali",
+  "fileSuffixes": [".smali"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "memberIdentifier": "(?:<init>|<clinit>|[a-zA-Z_$][a-zA-Z0-9_$-]*)",
+    "labelIdentifier": "[a-zA-Z0-9_$-]+",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "descriptorRule": [
+      {
+        "pattern": "(?<![A-Za-z0-9_$/;])((?:\\[)*)(L[^;]+;)",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_$/;])((?:\\[)*)([VCZBISJDF])(?=$|[^A-Za-z0-9_$/])",
+        "styles": [1, "punctuation", 2, "builtin"]
+      }
+    ],
+    "descriptorListRule": [
+      {
+        "pattern": "(\\[*)(L[^;]+;)",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(\\[*)([VCZBISJDF])",
+        "styles": [1, "punctuation", 2, "builtin"]
+      }
+    ],
+    "memberReferenceRule": [
+      {
+        "pattern": "(->)(${memberIdentifier})(\\()([^)]*)(\\))(\\[*)(L[^;]+;)",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation", 7, "class"],
+        "subStates": [4, "descriptorList"]
+      },
+      {
+        "pattern": "(->)(${memberIdentifier})(\\()([^)]*)(\\))(\\[*)([VCZBISJDF])",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation", 7, "builtin"],
+        "subStates": [4, "descriptorList"]
+      },
+      {
+        "pattern": "(->)(${memberIdentifier})(:)(\\[*)(L[^;]+;)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation", 4, "punctuation", 5, "class"]
+      },
+      {
+        "pattern": "(->)(${memberIdentifier})(:)(\\[*)([VCZBISJDF])",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation", 4, "punctuation", 5, "builtin"]
+      }
+    ],
+    "literalRule": [
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_$/])-?(?:NaN|Infinity)(?:[fFdD])?(?=$|[^A-Za-z0-9_$/])",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_$/])-?0x[0-9a-fA-F]+(?:[tTsSlLfFdD])?(?=$|[^A-Za-z0-9_$/])",
+        "style": "number"
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_$/])-?(?:\\d+\\.\\d*|\\d*\\.\\d+|\\d+)(?:[eE][+-]?\\d+)?(?:[tTsSlLfFdD])?(?=$|[^A-Za-z0-9_$/])",
+        "style": "number"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(?m)^\\s*(\\.method)\\b",
+        "styles": [1, "keyword"],
+        "state": "methodDecl"
+      },
+      {
+        "pattern": "(?m)^\\s*(\\.field)\\b",
+        "styles": [1, "keyword"],
+        "state": "fieldDecl"
+      },
+      {
+        "pattern": "(?m)^\\s*(\\.(?:local|param|parameter|end local|restart local))\\b",
+        "styles": [1, "keyword"],
+        "state": "localDecl"
+      },
+      {
+        "pattern": "(?m)^\\s*(\\.(?:end |restart )?[a-z_\\-]+)",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?m)^\\s*((?:return(?:-void(?:-no-barrier|-barrier)?|-object|-wide)?|move(?:-object(?:/from16|/16)?|-wide(?:/from16|/16)?|/from16|/16)?|move-result(?:-object|-wide)?|move-exception|const(?:-string(?:/jumbo)?|-class|-method-handle|-method-type|-wide(?:/high16|/32|/16)?|/high16|/16|/4)?|monitor-(?:enter|exit)|check-cast|instance-of|array-length|new-(?:instance|array)|filled-new-array(?:/range)?|fill-array-data|throw(?:-verification-error)?|goto(?:/32|/16)?|if-(?:eqz|nez|ltz|gez|gtz|lez|eq|ne|lt|ge|gt|le)|cmp(?:l-float|g-float|l-double|g-double|-long)|a(?:get|put)(?:-wide|-object|-boolean|-byte|-char|-short)?|iget(?:-object-volatile|-wide-volatile|-object-quick|-wide-quick|-volatile|-quick|-object|-wide|-boolean|-byte|-char|-short)?|iput(?:-object-volatile|-wide-volatile|-object-quick|-wide-quick|-volatile|-quick|-object|-wide|-boolean|-byte|-char|-short)?|sget(?:-object-volatile|-wide-volatile|-volatile|-object|-wide|-boolean|-byte|-char|-short)?|sput(?:-object-volatile|-wide-volatile|-volatile|-object|-wide|-boolean|-byte|-char|-short)?|invoke-(?:polymorphic|custom)(?:/range)?|invoke-(?:virtual|super|direct|static|interface)(?:/range)?|invoke-(?:virtual|super)-quick(?:/range)?|invoke-direct-empty|invoke-object-init/range|execute-inline(?:/range)?|neg-(?:int|long|float|double)|not-(?:int|long)|(?:int|long|float|double)-to-(?:long|float|double|int)|int-to-(?:byte|char|short)|(?:add|sub|mul|div|rem)-(?:double|float)(?:/2addr)?|(?:add|sub|mul|div|rem|and|or|xor|shl|shr|ushr)-(?:int|long)(?:/2addr|/lit8|/lit16)?|rsub-int(?:/lit8)?|packed-switch|sparse-switch|nop))\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(static-get|static-put|instance-get|instance-put|invoke-instance|invoke-static|invoke-direct|invoke-interface|invoke-constructor)(@)",
+        "styles": [1, "keyword", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(public|private|protected|static|final|synchronized|volatile|bridge|transient|varargs|native|interface|abstract|strictfp|synthetic|annotation|enum|constructor|declared-synchronized|build|runtime|system|whitelist|greylist|blacklist|greylist-max-o|greylist-max-p|greylist-max-q|greylist-max-r|core-platform-api|test-api)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${memberIdentifier})(\\s*)(=)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b[vp][0-9]+\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": ":${labelIdentifier}",
+        "style": "method"
+      },
+      {
+        "include": "memberReferenceRule"
+      },
+      {
+        "pattern": "(\\()([^)]*)(\\))",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "descriptorList"]
+      },
+      {
+        "include": "descriptorRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "literalRule"
+      },
+      {
+        "pattern": "->|\\.\\.|[()\\[\\]{};,.=:]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "fieldDecl": [
+      {
+        "pattern": "\\b(public|private|protected|static|final|volatile|transient|synthetic|enum|deprecated)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${memberIdentifier})(\\s*)(:)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "include": "memberReferenceRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "descriptorRule"
+      },
+      {
+        "include": "literalRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "->|[=,{}\\[\\]():]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "methodDecl": [
+      {
+        "pattern": "\\b(public|private|protected|static|final|synchronized|bridge|varargs|native|abstract|strictfp|synthetic|constructor|declared-synchronized)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${memberIdentifier})(\\()([^)]*)(\\))",
+        "styles": [1, "method", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "descriptorList"]
+      },
+      {
+        "include": "descriptorRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[,=]",
+        "style": "punctuation"
+      },
+      {
+        "include": "literalRule"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "localDecl": [
+      {
+        "pattern": "\\b[vp][0-9]+\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "(${memberIdentifier})(\\s*)(=)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "memberReferenceRule"
+      },
+      {
+        "include": "descriptorRule"
+      },
+      {
+        "include": "literalRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "->|\\.\\.|[=,{}\\[\\]():]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "descriptorList": [
+      {
+        "include": "descriptorListRule"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}
