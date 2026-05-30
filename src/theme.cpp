@@ -103,6 +103,13 @@ namespace sweetshot {
                                          theme.token_styles[token_style_id::kString].foreground, 0.16);
     }
 
+    void SetFrameColors(Theme& theme, const char* line_number_background, const char* gutter_border,
+                        const char* indent_guide_foreground) {
+      theme.line_number_background = line_number_background;
+      theme.gutter_border = gutter_border;
+      theme.indent_guide_foreground = indent_guide_foreground;
+    }
+
     Theme MakeTheme(const std::string& name, const char* background, const char* foreground,
                     const TokenPalette& palette) {
       Theme theme;
@@ -161,59 +168,76 @@ namespace sweetshot {
   }
 
   Theme VscodeDarkTheme() {
-    return MakeTheme("vscode-dark", "#1e1e1e", "#d4d4d4", {
+    Theme theme = MakeTheme("vscode-dark", "#1e1e1e", "#d4d4d4", {
       "#569cd6", "#bd63c5", "#e4fad5", "#60ae6f", "#4ec9b0", "#9cdcfe", "#9b9bc8", "#d69d85",
       "#fffd9b", "#569cd6", "#9b9bc8", "#4ec9b0", "#4ec9b0", "#569cd6", "#4fc1ff", "#9cdcfe"
     });
+    theme.line_number_foreground = "#858585";
+    SetFrameColors(theme, "#1e1e1e", "#2a2a2a", "#363636");
+    return theme;
   }
 
   Theme MonokaiTheme() {
-    return MakeTheme("monokai", "#272822", "#f8f8f2", {
+    Theme theme = MakeTheme("monokai", "#272822", "#f8f8f2", {
       "#f92672", "#e6db74", "#ae81ff", "#75715e", "#a6e22e", "#a6e22e", "#f8f8f2", "#f8f8f2",
       "#e6db74", "#f92672", "#ae81ff", "#fd971f", "#a6e22e", "#66d9ef", "#66d9ef", "#a6e22e"
     });
+    SetFrameColors(theme, "#272822", "#3a3a35", "#45463d");
+    return theme;
   }
 
   Theme DraculaTheme() {
-    return MakeTheme("dracula", "#282a36", "#f8f8f2", {
+    Theme theme = MakeTheme("dracula", "#282a36", "#f8f8f2", {
       "#ff79c6", "#f1fa8c", "#bd93f9", "#6272a4", "#8be9fd", "#50fa7b", "#f8f8f2", "#f8f8f2",
       "#ffb86c", "#ff79c6", "#bd93f9", "#ffb86c", "#50fa7b", "#8be9fd", "#8be9fd", "#50fa7b"
     });
+    SetFrameColors(theme, "#282a36", "#3b3e4c", "#44475a");
+    return theme;
   }
 
   Theme GithubLightTheme() {
-    return MakeTheme("github-light", "#ffffff", "#24292f", {
+    Theme theme = MakeTheme("github-light", "#ffffff", "#24292f", {
       "#cf222e", "#0a3069", "#0550ae", "#6e7781", "#953800", "#8250df", "#953800", "#24292f",
       "#953800", "#cf222e", "#0550ae", "#953800", "#116329", "#0550ae", "#0550ae", "#0550ae"
     });
+    SetFrameColors(theme, "#ffffff", "#d0d7de", "#d8dee4");
+    return theme;
   }
 
   Theme GithubDarkTheme() {
-    return MakeTheme("github-dark", "#0d1117", "#c9d1d9", {
+    Theme theme = MakeTheme("github-dark", "#0d1117", "#c9d1d9", {
       "#ff7b72", "#a5d6ff", "#79c0ff", "#8b949e", "#ffa657", "#d2a8ff", "#ffa657", "#c9d1d9",
       "#ffa657", "#ff7b72", "#79c0ff", "#ffa657", "#7ee787", "#79c0ff", "#79c0ff", "#79c0ff"
     });
+    SetFrameColors(theme, "#0d1117", "#30363d", "#21262d");
+    return theme;
   }
 
   Theme OneDarkTheme() {
-    return MakeTheme("one-dark", "#282c34", "#abb2bf", {
+    Theme theme = MakeTheme("one-dark", "#282c34", "#abb2bf", {
       "#c678dd", "#98c379", "#d19a66", "#5c6370", "#e5c07b", "#61afef", "#e06c75", "#abb2bf",
       "#e5c07b", "#c678dd", "#d19a66", "#56b6c2", "#e5c07b", "#56b6c2", "#61afef", "#61afef"
     });
+    SetFrameColors(theme, "#282c34", "#3b4048", "#3e4451");
+    return theme;
   }
 
   Theme SolarizedDarkTheme() {
-    return MakeTheme("solarized-dark", "#002b36", "#839496", {
+    Theme theme = MakeTheme("solarized-dark", "#002b36", "#839496", {
       "#859900", "#2aa198", "#d33682", "#586e75", "#b58900", "#268bd2", "#cb4b16", "#839496",
       "#b58900", "#859900", "#cb4b16", "#d33682", "#268bd2", "#268bd2", "#268bd2", "#268bd2"
     });
+    SetFrameColors(theme, "#002b36", "#073642", "#164650");
+    return theme;
   }
 
   Theme NordTheme() {
-    return MakeTheme("nord", "#2e3440", "#d8dee9", {
+    Theme theme = MakeTheme("nord", "#2e3440", "#d8dee9", {
       "#81a1c1", "#a3be8c", "#b48ead", "#616e88", "#8fbcbb", "#88c0d0", "#d8dee9", "#eceff4",
       "#ebcb8b", "#81a1c1", "#b48ead", "#ebcb8b", "#8fbcbb", "#5e81ac", "#88c0d0", "#88c0d0"
     });
+    SetFrameColors(theme, "#2e3440", "#3b4252", "#434c5e");
+    return theme;
   }
 
   Theme BuiltinTheme(const std::string& name) {
