@@ -67,6 +67,7 @@ Use quotes around paths with spaces.
 - Prefer real project code over artificial demo snippets
 - Prefer snippets with nested `if`, `for`, `switch`, classes, or callbacks when showing indent guides
 - Avoid snippets dominated by large strings, generated code, or repetitive data tables
+- Omit `--theme` unless the user asks for a specific theme
 
 ## Common Flags
 
@@ -74,7 +75,6 @@ Use quotes around paths with spaces.
 sweetshot src/file.cpp --syntax-dir <syntax-dir> --lines 40:80 -o docs/images/example.png
 sweetshot src/file.cpp --syntax-dir <syntax-dir> --lines 40:80 --focus 52:61 -o docs/images/example.png
 sweetshot src/file.cpp --syntax-dir <syntax-dir> --lines 40:80 --mark 66:70 -o docs/images/example.png
-sweetshot src/file.cpp --syntax-dir <syntax-dir> --theme vscode-dark -o docs/images/example.png
 sweetshot src/file.cpp --syntax-dir <syntax-dir> --scale 4 -o docs/images/example.png
 ```
 
