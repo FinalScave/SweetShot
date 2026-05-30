@@ -208,6 +208,30 @@ TEST_CASE("Default PNG rasterizer renders text with the embedded fallback font")
   REQUIRE(height == png.height);
   REQUIRE(CountNonBackgroundPixels(rgba, 0, 0, 0) > 100);
 }
+
+TEST_CASE("Default PNG rasterizer renders CJK text with the embedded fallback font") {
+  const std::shared_ptr<sweetshot::SvgRasterizer> rasterizer = sweetshot::CreateDefaultSvgRasterizer();
+  REQUIRE(rasterizer);
+
+  sweetshot::PngOptions options;
+  options.scale = 1.0;
+  options.background = "#000000";
+
+  const sweetshot::PngResult png = rasterizer->Rasterize(
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300\" height=\"64\">"
+    "<rect width=\"300\" height=\"64\" fill=\"#000000\"/>"
+    "<text x=\"16\" y=\"42\" font-family=\"Noto Sans Mono CJK SC, monospace\" "
+    "font-size=\"32\" fill=\"#ffffff\">中文测试</text>"
+    "</svg>",
+    options);
+
+  unsigned width = 0;
+  unsigned height = 0;
+  const std::vector<std::uint8_t> rgba = DecodeRgba(png.bytes, width, height);
+  REQUIRE(width == png.width);
+  REQUIRE(height == png.height);
+  REQUIRE(CountNonBackgroundPixels(rgba, 0, 0, 0) > 100);
+}
 #endif
 
 TEST_CASE("Default PNG rasterizer writes compressed PNG bytes") {

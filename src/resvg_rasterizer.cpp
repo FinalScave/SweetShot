@@ -21,6 +21,7 @@ namespace sweetshot {
     constexpr std::uint32_t kMaxImageDimension = 100000;
     constexpr std::uint64_t kMaxPixelCount = 100000000;
     constexpr const char* kEmbeddedFallbackFontPath = "fonts/NotoMono-Regular.ttf";
+    constexpr const char* kEmbeddedCjkFallbackFontPath = "fonts/NotoSansMonoCJKsc-Regular.otf";
     constexpr const char* kEmbeddedFallbackFontFamily = "Noto Mono";
 
     struct Rgba {
@@ -103,14 +104,18 @@ namespace sweetshot {
       }
     }
 
-    void LoadEmbeddedFallbackFont(resvg_options* options) {
-      const cmrc::embedded_filesystem resources = cmrc::sweetshot_resources::get_filesystem();
-      const cmrc::file font = resources.open(kEmbeddedFallbackFontPath);
-      if (font.size() == 0) {
-        return;
+    void LoadEmbeddedFont(resvg_options* options, const cmrc::embedded_filesystem& resources, const char* path) {
+      const cmrc::file font = resources.open(path);
+      if (font.size() > 0) {
+        resvg_options_load_font_data(options, font.begin(), font.size());
       }
+    }
 
-      resvg_options_load_font_data(options, font.begin(), font.size());
+    void LoadEmbeddedFallbackFonts(resvg_options* options) {
+      const cmrc::embedded_filesystem resources = cmrc::sweetshot_resources::get_filesystem();
+      LoadEmbeddedFont(options, resources, kEmbeddedFallbackFontPath);
+      LoadEmbeddedFont(options, resources, kEmbeddedCjkFallbackFontPath);
+
       resvg_options_set_font_family(options, kEmbeddedFallbackFontFamily);
       resvg_options_set_monospace_family(options, kEmbeddedFallbackFontFamily);
     }
@@ -216,7 +221,7 @@ namespace sweetshot {
 
     ResvgOptionsHandle resvg_options;
     resvg_options_load_system_fonts(resvg_options.Get());
-    LoadEmbeddedFallbackFont(resvg_options.Get());
+    LoadEmbeddedFallbackFonts(resvg_options.Get());
 
     resvg_render_tree* raw_tree = nullptr;
     const int32_t parse_result =

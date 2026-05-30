@@ -44,6 +44,7 @@ cmrc_add_resource_library(sweetshot_resources
         NAMESPACE sweetshot_resources
         WHENCE ${PROJECT_SOURCE_DIR}/3dparty
         ${PROJECT_SOURCE_DIR}/3dparty/fonts/NotoMono-Regular.ttf
+        ${PROJECT_SOURCE_DIR}/3dparty/fonts/NotoSansMonoCJKsc-Regular.otf
 )
 
 add_library(sweetshot_core STATIC
